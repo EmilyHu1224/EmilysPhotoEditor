@@ -1,0 +1,122 @@
+﻿body
+{
+    margin: 0px;
+}
+
+.Holder
+{
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+}
+
+#main
+{
+    border: 1px solid #cccccc;
+}
+
+#album
+{
+    position: absolute;
+    overflow: auto;
+    border: 1px solid gray;
+    text-align: center;
+    vertical-align: top;
+    background-color: #cccccc;
+}
+
+#pad
+{
+    position: absolute;
+    text-align: center;
+    vertical-align: middle;
+    overflow: auto;
+    border: 1px solid gray;
+    background-color: #cccccc;
+}
+
+#c
+{
+    text-align: center;
+    vertical-align: middle;
+    display: inline;
+}
+
+.thumbnail
+{
+    cursor: pointer;
+    width: 85px;
+    height: 85px;
+    margin: 5px;
+}
+
+.Toolbar
+{
+    width: 100%;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    margin-bottom: 1px;
+    background-color: #eeeeee;
+    border: 1px solid #cccccc;
+}
+
+.Footbar
+{
+    width: 100%;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    margin-top: 1px;
+    background-color: #eeeeee;
+    border: 1px solid #cccccc;
+}
+
+.Toolbar span
+{
+    text-align: left;
+}
+
+.Toolbar img
+{
+    cursor: pointer;
+    margin-left: 5px;
+    margin-right: 5px;
+    border: 1px none red;
+    vertical-align: middle;
+}
+
+.ColorPicker
+{
+    background-color: #ffffff;
+    border-collapse: collapse;
+    border: 1px solid #808080;
+}
+
+.ColorPicker td
+{
+    border: 1px solid #808080;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+
+.SizePicker
+{
+    background-color: #ffffff;
+    border-collapse: collapse;
+    border: 1px solid #808080;
+}
+
+.SizePicker td
+{
+    color: black;
+    font-size: 9pt;
+    border: 1px solid #808080;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+}
