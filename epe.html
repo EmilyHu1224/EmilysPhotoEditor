@@ -1,0 +1,47 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Emily Photo Editor For Web (EPE 0.1)</title>
+    <script type="text/ecmascript" src="tools.js"></script>
+    <script type="text/ecmascript" src="epe.js"></script>
+    <link rel="stylesheet" type="text/css" href="epe.css" />
+
+</head>
+<body onload="EPE_Init('c',  3, '#ff0000')">
+    <table id="holder" class="Holder">
+        <tr id="c_toolbar" class="Toolbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
+            <td style="text-align: left; padding-left: 10px;">
+                <span id="c_title">Emily Photo Editor</span>
+            </td>
+            <td id="c_buttons" style="text-align: right">               
+                <img src="images/open.gif" onclick="EPE_Load(this)" title="Open your photos" />
+                <img id="c_pen" src="images/pen.png" onclick="EPE_Pen(this)" title="Start to draw" />
+                <img id="c_color" src="images/pencolor.gif" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
+                <img id="c_size" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
+                <img id="c_eraser" src="images/eraser.png" onclick="EPE_Eraser(this)" title="Start to erase" />
+                <img src="images/clear.gif" onclick="if(confirm('Are you sure to clear the photo?')) EPE_Clear(this)" title="Clear the photo" />
+                <img src="images/help.gif" onclick="window.open('help.html','_blank')" title="Help information" />
+            </td>
+            <td id="c_io" style="text-align: right; display: none">
+                <span id="c_info"></span>
+                <input id="c_uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
+                <img id="c_exit" src="images/exit.gif" onclick="EPE_ExitIO(this)" title="Return to Emily Photo Editor" />
+            </td>
+        </tr>
+        <tr id="main" style="width: 100%; height: 100%;">
+            <td colspan="3">
+                <div>
+                    <div id="album" title="Album: click the Open button on the toolbar to load the phontos from your device."></div>
+                    <div id="pad" dropzone="link" ondrop="EPE_Drop(event)" ondragover="EPE_AllowDrop(event)" title="Canvas: Drag your photo here to edit it.">
+                        <canvas id="c">Sorry! Your browser does not support HTML5.</canvas>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr id="c_footbar" class="Footbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
+            <td colspan="3"><a href="mailto:emilyhu1997@outlook.com">EmilyHu1997@outlook.com</a></td>
+        </tr>
+    </table>
+</body>
+</html>
