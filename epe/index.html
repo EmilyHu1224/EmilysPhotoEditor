@@ -12,24 +12,25 @@
     <table id="holder" class="Holder">
         <tr id="c_toolbar" class="Toolbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
             <td style="text-align: left; padding-left: 10px;">
-                <span><a href="index.html"><img src="images/home.png"; height="80"; width="80" /></a></span>
+                <span><a href="index.html"><img src="images/home.png"; height="60"; width="60" /></a></span>
                 &nbsp;
                 &nbsp;
                 <span id="c_title"><img src="images/title.png"; /></span>
             </td>
             <td id="c_buttons" style="text-align: right">               
-                <img src="images/open.gif" onclick="EPE_Load(this)" title="Open your photos" />
+                <img src="images/open.png" onclick="EPE_Load(this)" title="Open your photos" />
                 <img id="c_pen" src="images/pen.png" onclick="EPE_Pen(this)" title="Start to draw" />
-                <img id="c_color" src="images/pencolor.gif" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
+                <img id="c_color" src="images/pencolor.png" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
                 <img id="c_size" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
                 <img id="c_eraser" src="images/eraser.png" onclick="EPE_Eraser(this)" title="Start to erase" />
-                <img src="images/clear.gif" onclick="if(confirm('Are you sure to clear the photo?')) EPE_Clear(this)" title="Clear the photo" />
-                <img src="images/help.gif" onclick="window.open('help.html','_blank')" title="Help information" />
+                <img src="images/clear.png" onclick="if(confirm('Are you sure to clear the photo?')) EPE_Clear(this)" title="Clear the photo" />
+                <img src="images/help.png" onclick="window.open('help.html','_blank')" title="Help information" />
+                <img id="c_save" src="images/save.png" onclick="EPE_Save(this)" title="Save to the album" />
             </td>
             <td id="c_io" style="text-align: right; display: none">
                 <span id="c_info"></span>
                 <input id="c_uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
-                <img id="c_exit" src="images/exit.gif" onclick="EPE_ExitIO(this)" title="Return to Emily Photo Editor" />
+                <img id="c_exit" src="images/exit.png" onclick="EPE_ExitIO(this)" title="Return to Emily Photo Editor" />
             </td>
         </tr>
         <tr id="main" style="width: 100%; height: 100%;">
@@ -43,7 +44,7 @@
             </td>
         </tr>
         <tr id="c_footbar" class="Footbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
-            <td colspan="3"><a href="mailto:emilyhu1997@outlook.com">EmilyHu1997@outlook.com</a></td>
+            <td colspan="3"><a href="mailto:emilyhu1997@outlook.com"><img src="email.png" /></a></td>
         </tr>   
     </table>
 </body>

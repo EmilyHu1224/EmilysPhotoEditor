@@ -452,18 +452,9 @@ function EPE_OpenPhotos(input)
         {
             var img = new Image();
             img.src = this.result;
-            img.id = "photo" + no;
-            img.className = "thumbnail";
-
-            //Enable the img tag draggable
-            img.title = "Click or drag to the canvas in the right to edit.\r\nDrag to toolbar or footer to remove.\r\nOpen the context ment to save back into your device.";
-            img.draggable = true;
-            img.addEventListener('dragstart', EPE_DragStart, false);
-            img.onclick = function () { EPE_EditPhoto(this); };
-            album.appendChild(img);
+            EPE_AddToAlbum(img);
 
             index++;
-            no++;
             if (index >= uploader.files.length)
             {
                 EPE_ExitIO(input);
@@ -474,6 +465,22 @@ function EPE_OpenPhotos(input)
                 reader.readAsDataURL(uploader.files[index]);
             }
         }
+    }
+}
+function EPE_AddToAlbum(img)
+{
+    with (EPE)
+    {
+        img.id = "photo" + no;
+        no++;
+        img.className = "thumbnail";
+
+        //Enable the img tag draggable
+        img.title = "Click or drag to the canvas in the right to edit.\r\nDrag to toolbar or footer to remove.\r\nOpen the context ment to save back into your device.";
+        img.draggable = true;
+        img.addEventListener('dragstart', EPE_DragStart, false);
+        img.onclick = function () { EPE_EditPhoto(this); };
+        album.appendChild(img);
     }
 }
 function EPE_ExitIO(bnt)
@@ -515,11 +522,13 @@ function EPE_Save(bnt)
     {
         if (editing != null)
         {
-            //buttons.style.display = "none";
-            //io.style.display = "";
-            //info.innerHTML = "Save...";
             editing.src = canvas.toDataURL();
-            //EPE_ExitIO(bnt);
+        }
+        else
+        {
+            var img = new Image();
+            img.src = canvas.toDataURL();
+            EPE_AddToAlbum(img);
         }
 
         //image.src = canvas.toDataURL();
@@ -553,6 +562,14 @@ function EPE_AllowDrop(evt)
     evt.preventDefault();
 }
 
+function EPE_Decorate(bnt)
+{
+    with (EPE)
+    {
+        context.drawImage(bnt, 0, 0);
+    }
+
+}
 function EPE_Command(select)
 {
     with (EPE)
@@ -571,7 +588,7 @@ function EPE_Command(select)
             if (d == null) return false;
             if (d.data.length == 0) return false;
             d = d.data;
-           
+
             for (var i = 0; i < d.length; i += 4)
             {
                 var r = d[i];
@@ -586,7 +603,7 @@ function EPE_Command(select)
             }
 
             putImageData(d, 0, 0);
-           
+
         }
 
         select.selectedIndex = 0;
