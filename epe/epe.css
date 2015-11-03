@@ -10,66 +10,32 @@
     border-collapse: collapse;
 }
 
-#main
-{
-    border: 1px solid #cccccc;
-}
-
-#album
-{
-    position: absolute;
-    overflow: auto;
-    border: 1px solid gray;
-    text-align: center;
-    vertical-align: top;
-    background-color: #FFFFFF;
-}
-
-#pad
-{
-    position: absolute;
-    text-align: center;
-    vertical-align: middle;
-    overflow: auto;
-    border: 1px solid gray;
-    background-color: #FFFFFF;
-}
-
-#c
-{
-    text-align: center;
-    vertical-align: middle;
-    display: inline;
-}
-
-.thumbnail
-{
-    cursor: pointer;
-    width: 85px;
-    height: 85px;
-    margin: 5px;
-}
-
 .Toolbar
 {
     width: 100%;
-    height: 24px;
-    line-height: 24px;
+    height: 80px;
     text-align: center;
-    margin-bottom: 1px;
     background-color: #eeeeee;
-    border: 1px solid #cccccc;
 }
 
 .Footbar
 {
     width: 100%;
-    height: 24px;
-    line-height: 24px;
+    height: 50px;
     text-align: center;
-    margin-top: 1px;
     background-color: #eeeeee;
-    border: 1px solid #cccccc;
+}
+
+#c_buttons
+{
+    text-align: right;
+    display: table-cell;
+}
+
+#c_buttons img
+{
+    width: 40px;
+    height: 40px;
 }
 
 .Toolbar span
@@ -80,11 +46,56 @@
 .Toolbar img
 {
     cursor: pointer;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-left: 2px;
+    margin-right: 2px;
     border: 1px none red;
     vertical-align: middle;
 }
+
+#main
+{
+}
+
+
+#album
+{
+    width: 120px;
+    overflow: auto;
+    text-align: center;
+    vertical-align: top;
+}
+
+#pad
+{
+    overflow: auto;
+    position: relative;
+    background-color: #CCCCCC;
+}
+
+#c
+{
+    text-align: center;
+    vertical-align: middle;
+}
+
+
+#props
+{
+    width: 120px;
+    text-align: center;
+    vertical-align: top;
+    overflow: auto;
+}
+
+.thumbnail
+{
+    cursor: pointer;
+    width: 85px;
+    height: 85px;
+    margin: 5px;
+}
+
+
 
 .ColorPicker
 {

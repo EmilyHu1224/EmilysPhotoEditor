@@ -80,15 +80,14 @@ function getScrollPose(c)
         if (c.tagName.toUpperCase() == "BODY") break;
         pose.x += c.scrollLeft;
         pose.y += c.scrollTop;
-        c = c.parentElement;   
+        c = c.parentElement;
     }
     return pose;
 }
 
-
-function ShowDiv(div, cfire, html, css, w, h, hh)
+var zIndexShowPopup = 999;
+function Popup(div, cfire, html)
 {
-   
     var x = 0;
     var y = 0;
 
@@ -97,39 +96,14 @@ function ShowDiv(div, cfire, html, css, w, h, hh)
         var c = getCoordinates(cfire);
         var s = getScrollPose(cfire);
         x = c.x - s.x;
-        y = c.y - s.y;
-
-       
-        if (typeof (hh) != "undefined") y = y + hh;
-
-       
-        if (typeof (w) != "undefined")
-        {
-            if ((x + w) > document.body.clientWidth) x = x - w;
-        }
-
-      
-        if (cfire.style != null && cfire.style.display == "none")
-        {
-            x = 0;
-            y = 0;
-        }
+        y = c.y - s.y + cfire.clientHeight;
     }
-
-    return ShowPopup(div, html, css, x, y, w, h);
-}
-
-
-
-var zIndexShowPopup = 999;
-function ShowPopup(div, html, css, x, y, w, h)
-{
 
     if (html)
     {
         if (ValidObj(div) == false)
-        {            
-            div = document.createElement("div");            
+        {
+            div = document.createElement("div");
             document.body.appendChild(div);
             div.style.position = "absolute";
             div.style.zIndex = zIndexShowPopup;
@@ -139,17 +113,10 @@ function ShowPopup(div, html, css, x, y, w, h)
         div.innerHTML = html;
     }
 
-    if (w == 0)
-    {
-        if ((x + div.clientWidth) > document.body.clientWidth) x = x - div.clientWidth;
-    }
+    if ((x + div.clientWidth) > document.body.clientWidth) x = x - div.clientWidth;
 
-    if (IsEmptyOrNull(css) == false) div.className = css;
-    if (typeof (x) != "undefined" && x >= 0) div.style.left = x + "px";
-    if (typeof (y) != "undefined" && y >= 0) div.style.top = y + "px";
-    if (typeof (w) != "undefined" && w != 0) div.style.width = w + "px";
-    if (typeof (h) != "undefined" && h != 0) div.style.height = h + "px";
-
+    div.style.left = x + "px";
+    div.style.top = y + "px";
 
     div.style.display = "";
 

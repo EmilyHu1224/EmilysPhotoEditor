@@ -13,10 +13,8 @@ function EPE_Init(id, pensize, pencolor)
     //State:0-invalid, 10-pen enabled, 11 - drawing, 20 - eraser enabled, 21 - erasing, 31 - setting color, 32 - setting pen size
     EPE.flag = 0;
     EPE.LastPose = null;
-    EPE.opened = false;
     EPE.pensize = pensize;
     EPE.pencolor = pencolor;
-    EPE.photo_loaded = false;
     EPE.toolbar = null;
     EPE.bpen = null;
     EPE.beraser = null;
@@ -29,23 +27,31 @@ function EPE_Init(id, pensize, pencolor)
     EPE.index = 0;//the index of selected photos is being added into album.
     EPE.editing = null;//the photo that is being editted.
 
-    //elements on the html
-    EPE.canvas = document.getElementById(id);
-    EPE.holder = document.getElementById("holder");
-    EPE.album = document.getElementById("album");
-    EPE.main = document.getElementById("main");
-    EPE.pad = document.getElementById("pad");
-
-    //Toolbar and it's buttons
+    //toolbar
     EPE.toolbar = document.getElementById(id + "_toolbar");
     EPE.bpen = document.getElementById(id + "_pen");
     EPE.beraser = document.getElementById(id + "_eraser");
     EPE.bcolor = document.getElementById(id + "_color");
-    EPE.footbar = document.getElementById(id + "_footbar");
     EPE.info = document.getElementById(id + "_info");
     EPE.buttons = document.getElementById(id + "_buttons");
     EPE.uploader = document.getElementById(id + "_uploader");
     EPE.io = document.getElementById(id + "_io");
+
+    //elements on main
+    EPE.main = document.getElementById("main");
+
+    EPE.outalbum = document.getElementById("outalbum");
+    EPE.album = document.getElementById("album");
+
+    EPE.outpad = document.getElementById("outpad");
+    EPE.pad = document.getElementById("pad");
+    EPE.canvas = document.getElementById(id);
+
+    EPE.outprops = document.getElementById("outprops");
+    EPE.props = document.getElementById("props");
+
+    //footer
+    EPE.footbar = document.getElementById(id + "_footbar");
 
     try
     {
@@ -61,10 +67,10 @@ function EPE_Init(id, pensize, pencolor)
         with (EPE)
         {
             //Display the pen's color in the button
-            if (bcolor != null) bcolor.style.backgroundColor = pencolor;
+            //if (bcolor != null) bcolor.style.backgroundColor = pencolor;
 
             //Resize the Canvas (because it does not support style)
-            EPE_Size()
+            EPE_Size();
 
             //Register the mouse event for the canvas.
             canvas.addEventListener('mousedown', HWMouseDown, false);
@@ -76,6 +82,20 @@ function EPE_Init(id, pensize, pencolor)
             canvas.addEventListener('touchstart', HWMouseDown, false);
             canvas.addEventListener('touchmove', HWMouseMove, false);
             canvas.addEventListener('touchend', HWMouseUp, false);
+
+
+            for (var i = 1; i <= 10; i++)
+            {
+                var img = new Image();
+                img.id = "props" + i;
+                img.src = "props/" + i + ".png";
+
+                //Enable the img tag draggable
+                img.title = "Click or drag to the canvas to decorate your photo.\r\nDrag to props to remove.";
+                img.draggable = true;
+                img.addEventListener('dragstart', EPE_DragStart, false);
+                props.appendChild(img);
+            }
         }
 
 
@@ -89,29 +109,27 @@ function EPE_Size()
 {
     with (EPE)
     {
+
         //save the canvas's data to hidden image, because resizing the canvas will cause the image disappear.
         var img = new Image();
         img.src = canvas.toDataURL('image/png');
+        
 
-        //set size of the entire area to the size of body
-        holder.style.height = document.documentElement.clientHeight - 1 + "px";
-        holder.style.width = document.documentElement.clientWidth - 1 + "px";
+        main.style.height = document.documentElement.clientHeight - toolbar.clientHeight - footbar.clientHeight - 4 + "px";
+        main.style.width = document.documentElement.clientWidth - 1 + "px";
+        
+        album.style.height = main.clientHeight - 1 + "px";
 
-        //the absolute position and size of album
-        album.style.left = "1px";
-        album.style.top = toolbar.clientHeight + 2 + "px";
-        album.style.height = holder.clientHeight - toolbar.clientHeight - footbar.clientHeight - 6 + "px";
-        album.style.width = "120px";
+        props.style.height = main.clientHeight - 1 + "px";
 
-        //the absolute position and size of canvas
-        pad.style.left = album.clientWidth + 4 + "px";
-        pad.style.top = toolbar.clientHeight + 2 + "px";
-        pad.style.height = holder.clientHeight - toolbar.clientHeight - footbar.clientHeight - 6 + "px";
-        pad.style.width = holder.clientWidth - album.clientWidth - 6 + "px";
+        pad.style.height = main.clientHeight - 1 + "px";
+        pad.style.width = main.clientWidth - props.clientWidth - album.clientWidth - 6 + "px";
 
         //Resize the Canvas (because it does not support style)
-        canvas.width = parseInt(canvas.parentElement.clientWidth - 2);
-        canvas.height = parseInt(canvas.parentElement.clientHeight - 2);
+        canvas.width = pad.clientWidth - 2;
+        canvas.height = pad.clientHeight - 2;
+
+       
 
         //Restore the image into the canvas
         context.drawImage(img, 0, 0);
@@ -141,14 +159,14 @@ function EPE_SetFlag(f)
 
             case 10://using pen, when the mouse down, start drawing
             case 11://drawing
-                if (canvas != null) canvas.style.display = "block";
+                if (canvas != null) canvas.style.display = "";
                 if (bpen != null) EPE.bpen.style.borderStyle = "solid";
                 if (beraser != null) EPE.beraser.style.borderStyle = "none";
                 break;
 
             case 20://using eraser, when the mouse down, start erasing
             case 21://earsing
-                if (canvas != null) canvas.style.display = "block";
+                if (canvas != null) canvas.style.display = "";
                 if (bpen != null) EPE.bpen.style.borderStyle = "none";
                 if (beraser != null) EPE.beraser.style.borderStyle = "solid";
                 break;
@@ -290,8 +308,7 @@ function EPE_Clear(bnt)
     {
         EPE_CloseSetting();
 
-        if (context != null) context.clearRect(0, 0, canvas.width, canvas.height);
-
+        context.clearRect(0, 0, canvas.width, canvas.height);
     }
 }
 function EPE_SelectColor(bnt)
@@ -332,7 +349,7 @@ function EPE_SelectColor(bnt)
 
         html.append("</tr></table>");
         EPE_SetFlag(31);
-        colorTable = ShowDiv(colorTable, bnt, html.toString(), null, 0, 0, 24);
+        colorTable = Popup(colorTable, bnt, html.toString());
     }
 }
 function EPE_SetColor(td)
@@ -346,7 +363,7 @@ function EPE_SetColor(td)
         {
             var color = td.style.backgroundColor;
             context.strokeStyle = color;
-            bcolor.style.backgroundColor = color;
+            //bcolor.style.backgroundColor = color;
         }
     }
 }
@@ -382,7 +399,7 @@ function EPE_PenSize(bnt)
 
         html.append("</tr></table>");
         EPE_SetFlag(32);
-        sizeTable = ShowDiv(sizeTable, bnt, html.toString(), null, 0, 0, 24);
+        sizeTable = Popup(sizeTable, bnt, html.toString());
     }
 }
 function EPE_SetPenSize(size)
@@ -420,7 +437,7 @@ function EPE_Load(bnt)
     with (EPE)
     {
         buttons.style.display = "none";
-        io.style.display = "";
+        io.style.display = "table-cell";
         info.innerHTML = "Select one or more photos from your device."
 
         //Skill
@@ -487,7 +504,7 @@ function EPE_ExitIO(bnt)
 {
     with (EPE)
     {
-        buttons.style.display = "";
+        buttons.style.display = "table-cell";
         io.style.display = "none";
     }
 }
@@ -520,24 +537,29 @@ function EPE_Save(bnt)
 {
     with (EPE)
     {
+        for (var i = 0; i < pad.childNodes.length; i++)
+        {
+            var img = pad.childNodes[i];
+            if (img.tagName != "IMG") continue;
+            context.drawImage(img, parseInt(img.style.left.replace("px", "")), parseInt(img.style.top.replace("px", "")));
+            pad.removeChild(img);
+            i--;
+        }
+
         if (editing != null)
         {
+            //You are editing a photo, save to the img tag in the album.
             editing.src = canvas.toDataURL();
         }
         else
         {
+            //You are drawing on the canvas directly, add it into album.
             var img = new Image();
             img.src = canvas.toDataURL();
             EPE_AddToAlbum(img);
         }
 
-        //image.src = canvas.toDataURL();
-        //image.style.display = "";
-
-        //canvas.style.display = "none";
-        //buttons.style.display = "none";
-        //info.innerHTML = "You can open the context menu and save the following image."
-        //io.style.display = "";
+        context.clearRect(0, 0, canvas.width, canvas.height);
     }
 }
 function EPE_DragStart(evt)
@@ -548,7 +570,42 @@ function EPE_Drop(evt)
 {
     evt.preventDefault();
     var id = evt.dataTransfer.getData("Text");
-    EPE_EditPhoto(document.getElementById(id));
+    if (id.indexOf("props") == 0)
+    {
+        //Add props
+        var prop = document.getElementById(id);
+
+        var img = new Image();
+        img.id = "selected_" + id;//Set up a new id to identify
+        img.src = prop.src;
+        img.style.position = "absolute";
+
+        var p = HWPose(evt);
+        img.style.left = p.x + "px";
+        img.style.top = p.y + "px";
+
+        img.title = "Click or drag to the canvas to decorate your photo.\r\nDrag to props to remove.";
+        img.draggable = true;
+        img.addEventListener('dragstart', EPE_DragStart, false);
+        pad.appendChild(img);
+    }
+    else
+    {
+        if (id.indexOf("selected_") == 0)
+        {
+            //move selected props
+            var img = document.getElementById(id);
+
+            var p = HWPose(evt);
+            img.style.left = p.x + "px";
+            img.style.top = p.y + "px";
+        }
+        else
+        {
+            //Add photo
+            EPE_EditPhoto(document.getElementById(id));
+        }
+    }
 }
 function EPE_DropOut(evt)
 {
@@ -560,15 +617,6 @@ function EPE_DropOut(evt)
 function EPE_AllowDrop(evt)
 {
     evt.preventDefault();
-}
-
-function EPE_Decorate(bnt)
-{
-    with (EPE)
-    {
-        context.drawImage(bnt, 0, 0);
-    }
-
 }
 function EPE_Command(select)
 {

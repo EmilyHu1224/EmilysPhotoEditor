@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "emily1997.github.io", ".", "{0C1375A9-30A3-4CD7-8532-6DDFA19BE0DE}"
+	ProjectSection(WebsiteProperties) = preProject
+		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.0"
+		Debug.AspNetCompiler.VirtualPath = "/emily1997.github.io"
+		Debug.AspNetCompiler.PhysicalPath = "D:\emily1997.github.io\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\emily1997.github.io\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/emily1997.github.io"
+		Release.AspNetCompiler.PhysicalPath = "D:\emily1997.github.io\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\emily1997.github.io\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "50352"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0C1375A9-30A3-4CD7-8532-6DDFA19BE0DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C1375A9-30A3-4CD7-8532-6DDFA19BE0DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

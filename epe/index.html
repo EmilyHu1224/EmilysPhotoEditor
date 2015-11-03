@@ -8,41 +8,45 @@
     <link rel="stylesheet" type="text/css" href="epe.css" />
 
 </head>
-<body onload="EPE_Init('c',  3, '#FFFFCC')">
+<body onload="EPE_Init('c',  10, '#000080')">
     <table id="holder" class="Holder">
         <tr id="c_toolbar" class="Toolbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
-            <td style="text-align: left; padding-left: 10px;">
-                <span><a href="../index.html">
-                    <img src="images/home.png" height="60" width="60" /></a></span>
-                &nbsp;
-                &nbsp;
+            <td colspan="3">
+                <div style="padding-left: 10px; display: table-cell">
+                    <span><a href="../index.html">
+                        <img src="images/home.png" height="60" width="60" /></a></span>
+                    &nbsp;                           
                 <span id="c_title">
-                    <img src="images/title.png" /></span>
-            </td>
-            <td id="c_buttons" style="text-align: right">
-                <img src="images/open.png" onclick="EPE_Load(this)" title="Open your photos" />
-                <img id="c_pen" src="images/pen.png" onclick="EPE_Pen(this)" title="Start to draw" />
-                <img id="c_color" src="images/pencolor.png" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
-                <img id="c_size" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
-                <img id="c_eraser" src="images/eraser.png" onclick="EPE_Eraser(this)" title="Start to erase" />
-                <img src="images/clear.png" onclick="if(confirm('Are you sure to clear the photo?')) EPE_Clear(this)" title="Clear the photo" />
-                <img src="images/help.png" onclick="window.open('help.html','_blank')" title="Help information" />
-                <img id="c_save" src="images/save.png" onclick="EPE_Save(this)" title="Save to the album" />
-            </td>
-            <td id="c_io" style="text-align: right; display: none">
-                <span id="c_info" style="font-size:14pt; font-family:'MV Boli'"></span>
-                <input id="c_uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
-                <img id="c_exit" src="images/exit.png" onclick="EPE_ExitIO(this)" title="Return to Emily Photo Editor" />
+                    <img src="images/title.png" /></span> &nbsp; &nbsp; &nbsp;
+                </div>
+                <div id="c_buttons">
+                    <img src="images/open.png" onclick="EPE_Load(this)" title="Open your photos" />
+                    <img id="c_pen" src="images/pen.png" onclick="EPE_Pen(this)" title="Start to draw" />
+                    <img id="c_color" src="images/pencolor.png" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
+                    <img id="c_size" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
+                    <img id="c_eraser" src="images/eraser.png" onclick="EPE_Eraser(this)" title="Start to erase" />
+                    <img src="images/clear.png" onclick="if(confirm('Are you sure to clear the photo?')) EPE_Clear(this)" title="Clear the photo" />
+                    <img src="images/help.png" onclick="window.open('help.html','_blank')" title="Help information" />
+                    <img id="c_save" src="images/save.png" onclick="EPE_Save(this)" title="Save to the album" />
+                </div>
+                <div id="c_io" style="text-align: right; display: none">
+                    <span id="c_info" style="font-size: 14pt; font-family: 'MV Boli'"></span>
+                    <input id="c_uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
+                    <img id="c_exit" src="images/exit.png" onclick="EPE_ExitIO(this)" title="Return to Emily Photo Editor" />
+                </div>
             </td>
         </tr>
-        <tr id="main" style="width: 100%; height: 100%;">
-            <td colspan="3">
-                <div>
-                    <div id="album" title="Album: click the Open button on the toolbar to load the phontos from your device."></div>
-                    <div id="pad" dropzone="link" ondrop="EPE_Drop(event)" ondragover="EPE_AllowDrop(event)" title="Canvas: Drag your photo here to edit it.">
-                        <canvas id="c">Sorry! Your browser does not support HTML5.</canvas>
-                    </div>
+        <tr id="main">
+            <td>
+                <div id="album" title="Album: click the Open button on the toolbar to load the phontos from your device."></div>
+            </td>
+            <td>
+                <div id="pad" dropzone="link" ondrop="EPE_Drop(event)" ondragover="EPE_AllowDrop(event)" title="Canvas: Drag your photo here to edit it.">
+                    <canvas id="c" >Sorry! Your browser does not support HTML5.</canvas>
                 </div>
+            </td>
+            <td>
+                <div id="props" title="Props: select a property and drag to the canvas to decorate your photo."></div>
             </td>
         </tr>
         <tr id="c_footbar" class="Footbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
