@@ -22,7 +22,7 @@
     border: 1px solid gray;
     text-align: center;
     vertical-align: top;
-    background-color: #cccccc;
+    background-color: #FFFFFF;
 }
 
 #pad
@@ -32,7 +32,7 @@
     vertical-align: middle;
     overflow: auto;
     border: 1px solid gray;
-    background-color: #cccccc;
+    background-color: #FFFFFF;
 }
 
 #c
