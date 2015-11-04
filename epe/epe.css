@@ -14,14 +14,13 @@
 {
     width: 100%;
     height: 80px;
-    text-align: center;
     background-color: #eeeeee;
 }
 
 .Footbar
 {
     width: 100%;
-    height: 50px;
+    height: 30px;
     text-align: center;
     background-color: #eeeeee;
 }
@@ -70,13 +69,15 @@
     overflow: auto;
     position: relative;
     background-color: #CCCCCC;
+    margin-top:10px;
+    margin-bottom:10px;
 }
 
 #c
 {
     text-align: center;
     vertical-align: middle;
-    border:1px solid #808080; 
+    border: 1px solid #808080;
 }
 
 

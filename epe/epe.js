@@ -114,15 +114,15 @@ function EPE_Size()
         var img = new Image();
         img.src = canvas.toDataURL('image/png');
 
+        var margin = 21;
 
         main.style.height = document.documentElement.clientHeight - toolbar.clientHeight - footbar.clientHeight - 4 + "px";
         main.style.width = document.documentElement.clientWidth - 1 + "px";
 
-        album.style.height = main.clientHeight - 1 + "px";
+        album.style.height = main.clientHeight - margin + "px";
+        props.style.height = main.clientHeight - margin + "px";
+        pad.style.height = main.clientHeight - margin + "px";
 
-        props.style.height = main.clientHeight - 1 + "px";
-
-        pad.style.height = main.clientHeight - 1 + "px";
         pad.style.width = main.clientWidth - props.clientWidth - album.clientWidth - 6 + "px";
 
         //Resize the Canvas (because it does not support style)
