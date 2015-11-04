@@ -122,3 +122,84 @@ function Popup(div, cfire, html)
 
     return div;
 }
+
+
+//Get browser's type
+function GetExploreType()
+{
+    var userAgent = navigator.userAgent;
+    var rMsie = /(msie\s|trident.*rv:)([\w.]+)/;
+    var rFirefox = /(firefox)\/([\w.]+)/;
+    var rOpera = /(opera).+version\/([\w.]+)/;
+    var rChrome = /(chrome)\/([\w.]+)/;
+    var rSafari = /version\/([\w.]+).*(safari)/;
+    var ua = userAgent.toLowerCase();
+
+    var match = rMsie.exec(ua);
+    if (match != null)
+    {
+        return { browser: "IE", version: match[2] || "0" };
+    }
+
+    match = rFirefox.exec(ua);
+    if (match != null)
+    {
+        return { browser: "Firefox", version: match[2] || "0" };
+    }
+
+    match = rOpera.exec(ua);
+    if (match != null)
+    {
+        return { browser: "Opera", version: match[2] || "0" };
+    }
+
+    match = rChrome.exec(ua);
+    if (match != null)
+    {
+        return { browser: "Chrome", version: match[2] || "0" };
+    }
+
+    match = rSafari.exec(ua);
+    if (match != null)
+    {
+        return { browser: "Safari", version: match[1] || "0" };
+    }
+
+    return null;
+}
+
+
+function EnumProp(obj)
+{
+    var str = "";
+    for (var p in obj)
+    {
+        try
+        {
+            if (typeof (obj[p]) == "function")
+            {
+                //str += (p + ":" + typeof (obj[p]) + "\r\n");
+            }
+            else
+            {
+                var c = p + ":" + typeof (obj[p]) + "=" + obj[p];
+
+                try
+                {
+                    if (c.length > 100) c = c.substr(0, 100);
+                }
+                catch (e)
+                {
+                }
+
+                str += (c + "\r\n");
+            }
+        }
+        catch (e)
+        {
+        }
+
+    }
+    //return str;
+    alert(str);
+}

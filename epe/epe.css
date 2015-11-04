@@ -34,8 +34,8 @@
 
 #c_buttons img
 {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
 }
 
 .Toolbar span
@@ -76,6 +76,7 @@
 {
     text-align: center;
     vertical-align: middle;
+    border:1px solid #808080; 
 }
 
 

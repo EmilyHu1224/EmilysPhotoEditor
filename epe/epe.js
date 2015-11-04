@@ -113,11 +113,11 @@ function EPE_Size()
         //save the canvas's data to hidden image, because resizing the canvas will cause the image disappear.
         var img = new Image();
         img.src = canvas.toDataURL('image/png');
-        
+
 
         main.style.height = document.documentElement.clientHeight - toolbar.clientHeight - footbar.clientHeight - 4 + "px";
         main.style.width = document.documentElement.clientWidth - 1 + "px";
-        
+
         album.style.height = main.clientHeight - 1 + "px";
 
         props.style.height = main.clientHeight - 1 + "px";
@@ -129,50 +129,16 @@ function EPE_Size()
         canvas.width = pad.clientWidth - 2;
         canvas.height = pad.clientHeight - 2;
 
-       
+
 
         //Restore the image into the canvas
         context.drawImage(img, 0, 0);
 
         //Restore the setting of the canvas
-        context.lineCap = "round";
-        context.lineWidth = pensize;
-        context.strokeStyle = pencolor;
+        EPE_SetCanvas();
     }
 }
 
-//Change the state
-function EPE_SetFlag(f)
-{
-    with (EPE)
-    {
-        flag = f;
-
-        switch (flag)
-        {
-            case 0://idle
-                if (toolbar != null) toolbar.style.display = "none";
-                if (canvas != null) canvas.style.display = "none";
-                if (bpen != null) EPE.bpen.style.borderStyle = "none";
-                if (beraser != null) EPE.beraser.style.borderStyle = "none";
-                break;
-
-            case 10://using pen, when the mouse down, start drawing
-            case 11://drawing
-                if (canvas != null) canvas.style.display = "";
-                if (bpen != null) EPE.bpen.style.borderStyle = "solid";
-                if (beraser != null) EPE.beraser.style.borderStyle = "none";
-                break;
-
-            case 20://using eraser, when the mouse down, start erasing
-            case 21://earsing
-                if (canvas != null) canvas.style.display = "";
-                if (bpen != null) EPE.bpen.style.borderStyle = "none";
-                if (beraser != null) EPE.beraser.style.borderStyle = "solid";
-                break;
-        }
-    }
-}
 
 //Check whether the canvas contais any image
 function EPE_HasData()
@@ -183,251 +149,16 @@ function EPE_HasData()
         var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         if (imageData == null) return false;
         if (imageData.data.length == 0) return false;
-        for (var i = 4; i < imageData.data.length; i += 4)
+
+        for (var i = 0; i < imageData.data.length; i++)
         {
-            if (imageData.data[i + 3] != imageData.data[3]) return true;
-        }
-    }
-    return false;
-}
-
-//Event processing
-function HWMouseDown(evt)
-{
-    evt.preventDefault();
-    with (EPE)
-    {
-        EPE_CloseSetting()
-
-        if (flag == 10 || flag == 20)
-        {
-            flag++;//Start drawing or earsing
-            LastPose = HWPose(evt);
-        }
-    }
-}
-function HWMouseMove(evt)
-{
-    evt.preventDefault();
-
-    with (EPE)
-    {
-        if (flag == 11)//Drawing
-        {
-            var p = HWPose(evt);
-
-            if (LastPose != null)
+            if (imageData.data[i] != imageData.data[0])
             {
-                context.beginPath();
-                context.moveTo(LastPose.x, LastPose.y);
-                context.lineTo(p.x, p.y);
-                context.stroke();
-            }
-
-            LastPose = p;
-        }
-        if (flag == 21)//Erasing
-        {
-            var p = HWPose(evt);
-            context.clearRect(p.x, p.y, 10, 10);
-        }
-    }
-}
-function HWMouseUp(evt)
-{
-    evt.preventDefault();
-
-    with (EPE)
-    {
-        //Stop drawing or erasing
-        if (flag == 11 || flag == 21) flag--;
-    }
-}
-function HWMouseOut(evt)
-{
-    with (EPE)
-    {
-        //Stop drawing or erasing
-        if (flag == 11 || flag == 21)
-        {
-            flag--;
-        }
-    }
-}
-//Calculate the location of mouse or hand
-function HWPose(evt)
-{
-    var x, y;
-    if (HWIsTouch(evt))
-    {
-        var c = G2GetPose(EPE.canvas);
-        x = evt.touches[0].pageX - c.x;
-        y = evt.touches[0].pageY - c.y;
-    }
-    else
-    {
-        x = evt.offsetX;
-        y = evt.offsetY;
-    }
-
-    return { x: x, y: y };
-}
-function HWIsTouch(evt)
-{
-    var type = evt.type;
-    if (type.indexOf('touch') >= 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-//Response the buttons in the toolbar
-function EPE_Pen(bnt)
-{
-    with (EPE)
-    {
-        EPE_CloseSetting();
-        EPE_SetFlag(10);//Enable pen
-    }
-}
-function EPE_Eraser(bnt)
-{
-    with (EPE)
-    {
-        EPE_CloseSetting();
-        EPE_SetFlag(20);//Enable earser
-    }
-}
-function EPE_Clear(bnt)
-{
-    with (EPE)
-    {
-        EPE_CloseSetting();
-
-        context.clearRect(0, 0, canvas.width, canvas.height);
-    }
-}
-function EPE_SelectColor(bnt)
-{
-    with (EPE)
-    {
-        if (EPE_CloseSetting()) return;
-
-        if (colorTable != null)
-        {
-            if (colorTable.style.display != "none")
-            {
-                EPE_SetFlag(31);
-                colorTable.style.display = "none";
-                return;
+                return true;
             }
         }
-
-        var html = new StringBuilder();
-        html.append("<table class=\"ColorPicker\">");
-
-        var cols = 1;
-        for (var i = 0; i < PenColors.length; i++)
-        {
-            if (cols == 1)
-            {
-                html.append("<tr>");
-            }
-
-            if (cols == 5)
-            {
-                html.append("</tr>");
-                cols = 1;
-            }
-            html.append("<td onclick=\"EPE_SetColor(this)\" style=\" background-color: " + PenColors[i] + "\"></td>");
-            cols++;
-        }
-
-        html.append("</tr></table>");
-        EPE_SetFlag(31);
-        colorTable = Popup(colorTable, bnt, html.toString());
     }
-}
-function EPE_SetColor(td)
-{
-    with (EPE)
-    {
-        EPE_SetFlag(10);
-        colorTable.style.display = "none";
 
-        if (td)
-        {
-            var color = td.style.backgroundColor;
-            context.strokeStyle = color;
-            //bcolor.style.backgroundColor = color;
-        }
-    }
-}
-function EPE_PenSize(bnt)
-{
-    with (EPE)
-    {
-        if (EPE_CloseSetting()) return;
-
-        var html = new StringBuilder();
-        html.append("<table class=\"SizePicker\">");
-
-        var cols = 1;
-        for (var i = 0; i < PenSizes.length; i++)
-        {
-            if (cols == 1)
-            {
-                html.append("<tr>");
-            }
-
-            if (cols == 5)
-            {
-                html.append("</tr>");
-                cols = 1;
-            }
-            html.append("<td onclick=\"EPE_SetPenSize(" + PenSizes[i] + ")\"");
-            if (context.lineWidth == PenSizes[i]) html.append("style=\"background-color: #cccccc\"");
-            else html.append("style=\"background-color: #eeeeee\"");
-            html.append(">" + PenSizes[i] + "</td>");
-
-            cols++;
-        }
-
-        html.append("</tr></table>");
-        EPE_SetFlag(32);
-        sizeTable = Popup(sizeTable, bnt, html.toString());
-    }
-}
-function EPE_SetPenSize(size)
-{
-    with (EPE)
-    {
-        EPE_SetFlag(10);
-        sizeTable.style.display = "none";
-
-        if (size)
-        {
-            context.lineWidth = size;
-        }
-    }
-}
-function EPE_CloseSetting()
-{
-    with (EPE)
-    {
-        if (flag == 31 || flag == 32)
-        {
-            if (colorTable != null) colorTable.style.display = "none";
-            if (sizeTable != null) sizeTable.style.display = "none";
-
-            EPE_SetFlag(10);
-            return true;
-        }
-    }
     return false;
 }
 
@@ -436,14 +167,16 @@ function EPE_Load(bnt)
 {
     with (EPE)
     {
-        buttons.style.display = "none";
-        io.style.display = "table-cell";
-        info.innerHTML = "Select one or more photos from your device."
+        EPE_ShowInfo("Select one or more photos from your device.");
 
         //Skill
         //the uploader control <input type="file"> is always hidden.
         //directly call the click event to start the browsing of file (like the user click the "select")
         uploader.click();
+
+        //for IE, click() will return after the file-selecting-dialog close or canceled, it can exit the uploading state if the user cancel the uploading.
+        //for other browser, click() will return at once before the file-selecting-dialog close or canceled. So, you had to click the exit button on the toolbar if you cancel the uploading.
+        if (GetExploreType().browser == "IE" && uploader.files.length == 0) EPE_ExitIO();
     }
 }
 //Load all the photos from the file control
@@ -456,11 +189,11 @@ function EPE_OpenPhotos(input)
 
         if (uploader.files.length == 0)
         {
-            EPE_ExitIO(input);
+            EPE_ExitIO();
         }
         else
         {
-            info.innerHTML = "Opening " + uploader.files[0].name + "...";
+            EPE_ShowInfo("Opening " + uploader.files[0].name + "...");
             reader.readAsDataURL(uploader.files[0]);
         }
 
@@ -474,11 +207,12 @@ function EPE_OpenPhotos(input)
             index++;
             if (index >= uploader.files.length)
             {
-                EPE_ExitIO(input);
+                uploader.value = null;
+                EPE_ExitIO();
             }
             else
             {
-                info.innerHTML = "Opening " + uploader.files[index].name + "...";
+                EPE_ShowInfo("Opening " + uploader.files[index].name + "...");
                 reader.readAsDataURL(uploader.files[index]);
             }
         }
@@ -500,15 +234,6 @@ function EPE_AddToAlbum(img)
         album.appendChild(img);
     }
 }
-function EPE_ExitIO(bnt)
-{
-    with (EPE)
-    {
-        buttons.style.display = "table-cell";
-        io.style.display = "none";
-    }
-}
-
 //Edit the photos
 function EPE_EditPhoto(img)
 {
@@ -528,15 +253,15 @@ function EPE_EditPhoto(img)
         context.drawImage(vimg, 0, 0);
 
         //Restore the settings of canvas 
-        context.lineCap = "round";
-        context.lineWidth = pensize;
-        context.strokeStyle = pencolor;
+        EPE_SetCanvas();
     }
 }
 function EPE_Save(bnt)
 {
     with (EPE)
     {
+        buttons.style.display
+        //Draw all props on the canvas and remove all props.
         for (var i = 0; i < pad.childNodes.length; i++)
         {
             var img = pad.childNodes[i];
@@ -545,6 +270,13 @@ function EPE_Save(bnt)
             pad.removeChild(img);
             i--;
         }
+
+        if (EPE_HasData() == false)
+        {
+            alert("There is nothing on the canvas.");
+            return;
+        }
+
 
         if (editing != null)
         {
@@ -559,7 +291,15 @@ function EPE_Save(bnt)
             EPE_AddToAlbum(img);
         }
 
+        //clear the canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
+
+        //Resize the Canvas (because it does not support style)
+        canvas.width = pad.clientWidth - 2;
+        canvas.height = pad.clientHeight - 2;
+
+        //Restore the setting of the canvas
+        EPE_SetCanvas();
     }
 }
 function EPE_DragStart(evt)
@@ -618,6 +358,65 @@ function EPE_AllowDrop(evt)
 {
     evt.preventDefault();
 }
+
+function EPE_Flip()
+{
+    with (EPE)
+    {
+        //get the original image
+        var img = new Image();
+        img.src = canvas.toDataURL('image/png');
+
+        //rotate the cavas and save the rotated image
+        canvas.width = img.height;
+        canvas.height = img.width;
+        context.rotate(90 * Math.PI / 180);
+        context.drawImage(img, 0, 0 - img.height);
+        img.src = canvas.toDataURL('image/png');
+
+        //restore canvas, use small size to enhance the perfomace
+        canvas.width = 10;
+        canvas.height = 10;
+        context.rotate(0 - 90 * Math.PI / 180);
+
+        //redraw the rotated image on the restored canvas
+        canvas.width = img.width;
+        canvas.height = img.height;
+        context.drawImage(img, 0, 0);
+
+        EPE_SetCanvas();
+    }
+}
+function EPE_Scale(ratio)
+{
+    with (EPE)
+    {
+        //get the original image
+        var img = new Image();
+        img.src = canvas.toDataURL('image/png');
+
+        //scale the canvas and re-draw the image
+        canvas.width = canvas.width * ratio;
+        canvas.height = canvas.height * ratio;
+        context.scale(ratio, ratio);
+        context.drawImage(img, 0, 0);
+
+        //save the scaled image
+        img.src = canvas.toDataURL('image/png');
+
+        //restore canvas, use small size to enhance the perfomace
+        canvas.width = 10;
+        canvas.height = 10;
+        context.scale(ratio == 2 ? 0.5 : 2, ratio == 2 ? 0.5 : 2);
+
+        //redraw the rotated image on the restored canvas
+        canvas.width = img.width;
+        canvas.height = img.height;
+        context.drawImage(img, 0, 0);
+
+        EPE_SetCanvas();
+    }
+}
 function EPE_Command(select)
 {
     with (EPE)
@@ -650,7 +449,7 @@ function EPE_Command(select)
                 d[i + 3] = r * m[15] + g * m[16] + b * m[17] + a * m[18] + m[19];
             }
 
-            putImageData(d, 0, 0);
+            context.putImageData(d, 0, 0);
 
         }
 
@@ -661,4 +460,33 @@ function EPE_Command(select)
 window.onresize = function ()
 {
     EPE_Size();
+}
+
+function EPE_ShowInfo(message)
+{
+    with (EPE)
+    {
+        buttons.style.display = "none";
+        io.style.display = "table-cell";
+        info.innerHTML = message;
+    }
+}
+function EPE_ExitIO()
+{
+    with (EPE)
+    {
+        buttons.style.display = "table-cell";
+        io.style.display = "none";
+    }
+}
+
+function EPE_SetCanvas()
+{
+    with (EPE)
+    {
+        //Restore the setting of the canvas
+        context.lineCap = "round";
+        context.lineWidth = pensize;
+        context.strokeStyle = pencolor;
+    }
 }

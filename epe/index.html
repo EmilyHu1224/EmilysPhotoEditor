@@ -3,8 +3,9 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Emily Photo Editor For Web (EPE 0.1)</title>
-    <script type="text/ecmascript" src="tools.js"></script>
     <script type="text/ecmascript" src="epe.js"></script>
+    <script type="text/ecmascript" src="draw.js"></script>
+    <script type="text/ecmascript" src="tools.js"></script>
     <link rel="stylesheet" type="text/css" href="epe.css" />
 
 </head>
@@ -17,7 +18,7 @@
                         <img src="images/home.png" height="60" width="60" /></a></span>
                     &nbsp;                           
                 <span id="c_title">
-                    <img src="images/title.png" /></span> &nbsp; &nbsp; &nbsp;
+                    <img src="images/title.png" /></span> &nbsp; &nbsp;
                 </div>
                 <div id="c_buttons">
                     <img src="images/open.png" onclick="EPE_Load(this)" title="Open your photos" />
@@ -25,9 +26,12 @@
                     <img id="c_color" src="images/pencolor.png" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
                     <img id="c_size" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
                     <img id="c_eraser" src="images/eraser.png" onclick="EPE_Eraser(this)" title="Start to erase" />
+                    <img id="c_flip" src="images/flip.png" onclick="EPE_Flip()" title="Flip the photo" />
+                    <img id="c_scaleup" src="images/scaleup.png" onclick="EPE_Scale(2)" title="Scale 100%" />
+                    <img id="c_scaledown" src="images/scaledown.png" onclick="EPE_Scale(0.5)" title="Scale 50%" />
                     <img src="images/clear.png" onclick="if(confirm('Are you sure to clear the photo?')) EPE_Clear(this)" title="Clear the photo" />
-                    <img src="images/help.png" onclick="window.open('help.html','_blank')" title="Help information" />
                     <img id="c_save" src="images/save.png" onclick="EPE_Save(this)" title="Save to the album" />
+                    <img src="images/help.png" onclick="window.open('help.html','_blank')" title="Help information" />
                 </div>
                 <div id="c_io" style="text-align: right; display: none">
                     <span id="c_info" style="font-size: 14pt; font-family: 'MV Boli'"></span>
