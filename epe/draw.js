@@ -1,5 +1,6 @@
 ﻿/* Emily Photo Editor For Web (EPE) */
 /* Drawing */
+var selectingDiv;
 
 //Change the state
 function EPE_SetFlag(f)
@@ -10,30 +11,40 @@ function EPE_SetFlag(f)
 
         switch (flag)
         {
-            case 0://idle
-                if (toolbar != null) toolbar.style.display = "none";
-                if (canvas != null) canvas.style.display = "none";
-                if (bpen != null) EPE.bpen.style.borderStyle = "none";
-                if (beraser != null) EPE.beraser.style.borderStyle = "none";
-                break;
 
             case 10://using pen, when the mouse down, start drawing
             case 11://drawing
-                if (canvas != null) canvas.style.display = "";
                 if (bpen != null) EPE.bpen.style.borderStyle = "solid";
                 if (beraser != null) EPE.beraser.style.borderStyle = "none";
+                if (bselect != null) EPE.bselect.style.borderStyle = "none";
+                bclear.title = "Clear the entire image";
+                bsave.title = "Save the entire image to the album";
+                EPE_RemoveSelector();
                 break;
 
             case 20://using eraser, when the mouse down, start erasing
             case 21://earsing
-                if (canvas != null) canvas.style.display = "";
                 if (bpen != null) EPE.bpen.style.borderStyle = "none";
                 if (beraser != null) EPE.beraser.style.borderStyle = "solid";
+                if (bselect != null) EPE.bselect.style.borderStyle = "none";
+                bclear.title = "Clear the entire image";
+                bsave.title = "Save the entire image to the album";
+                EPE_RemoveSelector();
+                break;
+
+
+            case 30://using selecter, when the mouse down, start selecting
+            case 31://selecting
+                if (bpen != null) EPE.bpen.style.borderStyle = "none";
+                if (beraser != null) EPE.beraser.style.borderStyle = "none";
+                if (bselect != null) EPE.bselect.style.borderStyle = "solid";
+                bclear.title = "Clear the selected area";
+                bsave.title = "Copy the selected area image to the album";
                 break;
         }
     }
+    EPE_SetDrawing();
 }
-
 
 //Event processing
 function HWMouseDown(evt)
@@ -43,10 +54,16 @@ function HWMouseDown(evt)
     {
         EPE_CloseSetting()
 
-        if (flag == 10 || flag == 20)
+        if (flag == 10 || flag == 20 || flag == 30)
         {
-            flag++;//Start drawing or earsing
+            flag++;//Start drawing, earsing, selecting
+
             LastPose = HWPose(evt);
+
+            if (flag == 31)
+            {
+                EPE_RemoveSelector();
+            }
         }
     }
 }
@@ -75,27 +92,56 @@ function HWMouseMove(evt)
             var p = HWPose(evt);
             context.clearRect(p.x, p.y, 10, 10);
         }
+
+        if (flag == 31)//Selecting
+        {
+            var p = HWPose(evt);
+
+            if (selectingDiv == null)
+            {
+                selectingDiv = document.createElement("div");
+                selectingDiv.className = "selectingDiv";
+                selectingDiv.style.position = "absolute";
+                selectingDiv.addEventListener('mousedown', EPE_ReSelect, false);
+                drop.appendChild(selectingDiv);
+                EPE_ShowInfo("Press mouse key and drag a rectangle...");
+            }
+            var x1 = LastPose.x;
+            var x2 = p.x;
+            var y1 = LastPose.y;
+            var y2 = p.y;
+            if (x1 > x2) { var t = x2; x2 = x1; x1 = t; }
+            if (y1 > y2) { var t = y2; y2 = y1; y1 = t; }
+            //make sure your mouse is out of the range of selectingDiv, so the mouseout will not happen.
+            x1++; y1++;
+            x2--; y2--;
+
+            selectingDiv.style.left = x1 + "px";
+            selectingDiv.style.top = y1 + "px";
+            selectingDiv.style.width = x2 - x1 - 1 + "px";
+            selectingDiv.style.height = y2 - y1 - 1 + "px";
+        }
     }
 }
+
 function HWMouseUp(evt)
 {
     evt.preventDefault();
 
     with (EPE)
     {
-        //Stop drawing or erasing
-        if (flag == 11 || flag == 21) flag--;
+        //Stop drawing, erasing, selecting
+        if (flag == 11 || flag == 21 || flag == 31) flag--;
+        if (flag == 30) EPE_ExitIO();
     }
 }
 function HWMouseOut(evt)
 {
     with (EPE)
     {
-        //Stop drawing or erasing
-        if (flag == 11 || flag == 21)
-        {
-            flag--;
-        }
+        //Stop drawing, erasing, selecting
+        if (flag == 11 || flag == 21 || flag == 31) flag--;
+        if (flag == 30) EPE_ExitIO();
     }
 }
 //Calculate the location of mouse or hand
@@ -146,13 +192,51 @@ function EPE_Eraser(bnt)
         EPE_SetFlag(20);//Enable earser
     }
 }
+function EPE_Select(bnt)
+{
+    with (EPE)
+    {
+        EPE_CloseSetting();
+        EPE_SetFlag(30);//Enable selector
+
+        EPE_RemoveSelector();
+
+        EPE_ShowInfo("Press mouse key and drag a rectangle...");
+    }
+}
+function EPE_ReSelect(evt)
+{
+    with (EPE)
+    {
+        EPE_RemoveSelector();
+    }
+}
+function EPE_RemoveSelector()
+{
+    with (EPE)
+    {
+        if (selectingDiv != null)
+        {
+            drop.removeChild(selectingDiv);
+            selectingDiv = null;
+        }
+    }
+}
 function EPE_Clear(bnt)
 {
     with (EPE)
     {
         EPE_CloseSetting();
 
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        if (flag == 30)
+        {
+            context.clearRect(parseInt(selectingDiv.style.left), parseInt(selectingDiv.style.top), parseInt(selectingDiv.style.width), parseInt(selectingDiv.style.height));
+            EPE_RemoveSelector();
+        }
+        else
+        {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        }
     }
 }
 function EPE_SelectColor(bnt)
@@ -165,7 +249,7 @@ function EPE_SelectColor(bnt)
         {
             if (colorTable.style.display != "none")
             {
-                EPE_SetFlag(31);
+                EPE_SetFlag(91);
                 colorTable.style.display = "none";
                 return;
             }
@@ -192,7 +276,7 @@ function EPE_SelectColor(bnt)
         }
 
         html.append("</tr></table>");
-        EPE_SetFlag(31);
+        EPE_SetFlag(91);
         colorTable = Popup(colorTable, bnt, html.toString());
     }
 }
@@ -242,7 +326,7 @@ function EPE_PenSize(bnt)
         }
 
         html.append("</tr></table>");
-        EPE_SetFlag(32);
+        EPE_SetFlag(92);
         sizeTable = Popup(sizeTable, bnt, html.toString());
     }
 }
@@ -263,7 +347,7 @@ function EPE_CloseSetting()
 {
     with (EPE)
     {
-        if (flag == 31 || flag == 32)
+        if (flag == 91 || flag == 92)
         {
             if (colorTable != null) colorTable.style.display = "none";
             if (sizeTable != null) sizeTable.style.display = "none";
@@ -273,4 +357,33 @@ function EPE_CloseSetting()
         }
     }
     return false;
+}
+
+
+function EPE_SetDrawing()
+{
+    with (EPE)
+    {
+        //Restore the setting of the canvas
+        if (flag <= 11)
+        {
+            context.lineCap = "round";
+            context.lineWidth = pensize;
+            context.strokeStyle = pencolor;
+        }
+
+        if (flag == 20 || flag == 21)
+        {
+            context.lineCap = "round";
+            context.lineWidth = pensize;
+            context.strokeStyle = pencolor;
+        }
+
+        if (flag == 30 || flag == 31)
+        {
+            context.lineCap = "round";
+            context.lineWidth = 1;
+            context.strokeStyle = "red";
+        }
+    }
 }
