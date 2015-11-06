@@ -21,12 +21,29 @@
     background-color: #eeeeee;
 }
 
-#c_buttons
+#c_buttons 
 {
     text-align: right;
 }
 
 #c_buttons img
+{
+    width: 30px;
+    height: 30px;
+}
+
+#c_processors 
+{
+    text-align: right;
+}
+
+#c_processors img
+{
+    width: 30px;
+    height: 30px;
+}
+
+#c_io img
 {
     width: 30px;
     height: 30px;
@@ -89,7 +106,7 @@
     text-align: center;
     vertical-align: top;
     overflow: auto;
-    background-color: #66CCCC;
+    background-color: #aad7ff;
 }
 
 .thumbnail
@@ -141,4 +158,10 @@
 .selectingDiv
 {
     border:1px  solid red;
+}
+
+.progress
+{
+    font-size:9pt;
+    text-align:center;
 }

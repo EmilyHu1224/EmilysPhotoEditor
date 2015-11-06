@@ -2,49 +2,7 @@
 /* Drawing */
 var selectingDiv;
 
-//Change the state
-function EPE_SetFlag(f)
-{
-    with (EPE)
-    {
-        flag = f;
 
-        switch (flag)
-        {
-
-            case 10://using pen, when the mouse down, start drawing
-            case 11://drawing
-                if (bpen != null) EPE.bpen.style.borderStyle = "solid";
-                if (beraser != null) EPE.beraser.style.borderStyle = "none";
-                if (bselect != null) EPE.bselect.style.borderStyle = "none";
-                bclear.title = "Clear the entire image";
-                bsave.title = "Save the entire image to the album";
-                EPE_RemoveSelector();
-                break;
-
-            case 20://using eraser, when the mouse down, start erasing
-            case 21://earsing
-                if (bpen != null) EPE.bpen.style.borderStyle = "none";
-                if (beraser != null) EPE.beraser.style.borderStyle = "solid";
-                if (bselect != null) EPE.bselect.style.borderStyle = "none";
-                bclear.title = "Clear the entire image";
-                bsave.title = "Save the entire image to the album";
-                EPE_RemoveSelector();
-                break;
-
-
-            case 30://using selecter, when the mouse down, start selecting
-            case 31://selecting
-                if (bpen != null) EPE.bpen.style.borderStyle = "none";
-                if (beraser != null) EPE.beraser.style.borderStyle = "none";
-                if (bselect != null) EPE.bselect.style.borderStyle = "solid";
-                bclear.title = "Clear the selected area";
-                bsave.title = "Copy the selected area image to the album";
-                break;
-        }
-    }
-    EPE_SetDrawing();
-}
 
 //Event processing
 function HWMouseDown(evt)
@@ -358,8 +316,6 @@ function EPE_CloseSetting()
     }
     return false;
 }
-
-
 function EPE_SetDrawing()
 {
     with (EPE)

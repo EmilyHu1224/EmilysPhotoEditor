@@ -30,16 +30,30 @@
                             <img id="c_select" src="images/select.png" onclick="EPE_Select(this)" title="Select a block" />
                             <img id="c_color" src="images/pencolor.png" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
                             <img id="c_size" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
-                            <img id="c_flip" src="images/flip.png" onclick="EPE_Flip()" title="Flip the photo" />
+                            <img id="c_flip" src="images/flip.png" onclick="EPE_Process(8)" title="Flip the photo" />
                             <img id="c_scaleup" src="images/scaleup.png" onclick="EPE_Scale(2)" title="Scale 100%" />
                             <img id="c_scaledown" src="images/scaledown.png" onclick="EPE_Scale(0.5)" title="Scale 50%" />
+                            <img id="c_processing" src="images/processing.png" onclick="EPE_OpenProcessor()" title="Processing the photo..." />
                             <img id="c_clear" src="images/clear.png" onclick="if(confirm('Are you sure to clear the photo?')) EPE_Clear(this)" title="Clear the photo" />
                             <img id="c_save" src="images/save.png" onclick="EPE_Save(this)" title="Save to the album" />
                         </td>
-                        <td id="c_io" style="text-align: right; display: none">
+                        <td id="c_processors" style="display: none">
+                            <img src="images/invert.png" onclick="EPE_Process(1)" title="Invert" />
+                            <img src="images/blackwhite.png" onclick="EPE_Process(2)" title="Black-and-white" />
+                            <img src="images/sepia.png" onclick="EPE_Process(3)" title="Sepia" />
+                            <img src="images/indent.png" onclick="EPE_Process(4)" title="Carving with indent" />
+                            <img src="images/convex.png" onclick="EPE_Process(5)" title="Carving convexly" />
+                            <img src="images/brightup.png" onclick="EPE_Process(6,50)" title="More brighter" />
+                            <img src="images/brightdown.png" onclick="EPE_Process(6,-50)" title="Less brighter" />
+                            <img src="images/gray.png" onclick="EPE_Process(7)" title="Gray scaling" />
+                            <img src="images/redcover.png" onclick="EPE_Process(31)" title="Red covering" />
+                            <img src="images/greencover.png" onclick="EPE_Process(32)" title="Green covering" />
+                            <img src="images/bluecover.png" onclick="EPE_Process(33)" title="Blue covering" />
+                            <img src="images/exit.png" onclick="EPE_ExitProcessor()" style="padding-left: 30px;" title="Close processors" />
+                        </td>
+                        <td id="c_io" style="text-align: right; display: none">                            
                             <span id="c_info" style="font-size: 14pt; font-family: MV Boli"></span>
-                            <input id="c_uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
-                            <img id="c_exit" src="images/exit.png" onclick="EPE_ExitIO(this)" title="Return to Emily Photo Editor" />
+                            <img id="c_exit" src="images/exit.png" onclick="EPE_ExitIO(this)" style="padding-left: 30px;" title="Cancel and return" />
                         </td>
                     </tr>
                 </table>
@@ -51,8 +65,8 @@
             </td>
             <td>
                 <div id="pad">
-                    <div id="drop" dropzone="link" ondrop="EPE_Drop(event)" ondragover="EPE_AllowDrop(event)"  title="Canvas: Drag your photo here to edit it.">
-                        <canvas id="c" >Sorry! Your browser does not support HTML5.</canvas>
+                    <div id="drop" dropzone="link" ondrop="EPE_Drop(event)" ondragover="EPE_AllowDrop(event)" title="Canvas: Drag your photo here to edit it.">
+                        <canvas id="c">Sorry! Your browser does not support HTML5.</canvas>
                     </div>
                 </div>
             </td>
@@ -62,10 +76,11 @@
         </tr>
         <tr id="c_footbar" class="Footbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
             <td colspan="3" style="text-align: center; vertical-align: middle; white-space: nowrap; width: 100%">
-                 <span id="c_status"></span>
+                <span id="c_status"></span>
                 <span style="padding-left: 50px;">HTML APP</span>
                 <span style="padding-left: 50px;">HTML5+JavaScript</span>
-                <span style="padding-left: 50px;"><a href="http://github.com/emily1997" target="_blank">See the code in my GitHut</a></span>
+                <span style="padding-left: 50px;"><a href="http://github.com/emily1997" target="_blank">
+                    <img src="../images/GitHub.ico" style="vertical-align: middle; padding-right: 10px;" />Follow me on GitHut</a></span>
                 <span style="padding-left: 50px;">
                     <a href="mailto:emilyhu1997@outlook.com">
                         <img src="images/email.png" style="width: 20px; height: 20px; vertical-align: middle" />
@@ -78,5 +93,6 @@
             </td>
         </tr>
     </table>
+    <input id="c_uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
 </body>
 </html>

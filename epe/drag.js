@@ -25,6 +25,9 @@ function EPE_Drop(evt)
         img.title = "Click or drag to the canvas to decorate your photo.\r\nDrag to props to remove.";
         img.draggable = true;
         img.addEventListener('dragstart', EPE_DragStart, false);
+        img.addEventListener('mousewheel', EPE_MouseWheelProp, false);
+        img.addEventListener('wheel', EPE_MouseWheelProp, false);
+
         drop.appendChild(img);
     }
     else

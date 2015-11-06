@@ -10,11 +10,6 @@ function EPE_Init(id, pensize, pencolor)
     EPE.context = null;
     EPE.canvas = null;
 
-    //State: 
-    //10-pen enabled, 11 - drawing, 
-    //20 - eraser enabled, 21 - erasing, 
-    //30 - selector enable, 31 selecting
-    //91 - setting color, 92 - setting pen size
     EPE.flag = 0;
     EPE.LastPose = null;
     EPE.pensize = pensize;
@@ -31,6 +26,8 @@ function EPE_Init(id, pensize, pencolor)
     EPE.no = 0;//the auto-increasing number for the id of photo
     EPE.index = 0;//the index of selected photos is being added into album.
     EPE.editing = null;//the photo that is being editted.
+    EPE.worker = null;//processing worker.
+    EPE.working = false;
 
     //toolbar
     EPE.toolbar = document.getElementById(id + "_toolbar");
@@ -44,6 +41,7 @@ function EPE_Init(id, pensize, pencolor)
     EPE.io = document.getElementById(id + "_io");
     EPE.bclear = document.getElementById(id + "_clear");
     EPE.bsave = document.getElementById(id + "_save");
+    EPE.processors = document.getElementById(id + "_processors");
 
     //elements on main area
     EPE.outalbum = document.getElementById("outalbum");
@@ -85,6 +83,9 @@ function EPE_Init(id, pensize, pencolor)
             canvas.addEventListener('mouseup', HWMouseUp, false);
             canvas.addEventListener('mouseout', HWMouseOut, false);
 
+            pad.addEventListener('mousewheel', EPE_MouseWheel, false);
+            pad.addEventListener('wheel', EPE_MouseWheel, false);
+
             //Register the touching event for the canvas.
             canvas.addEventListener('touchstart', HWMouseDown, false);
             canvas.addEventListener('touchmove', HWMouseMove, false);
@@ -107,6 +108,54 @@ function EPE_Init(id, pensize, pencolor)
 
         //Start to drawing
         EPE_SetFlag(10);
+    }
+}
+
+//Change the state
+function EPE_SetFlag(f)
+{
+    with (EPE)
+    {
+        //10:using pen, when the mouse down, start drawing
+        //11:drawing
+        //20:using eraser, when the mouse down, start erasing
+        //21:earsing
+        //30:using selecter, when the mouse down, start selecting
+        //31:selecting
+        //91:setting pen's color
+        //92:setting pen's size
+
+        flag = f;
+
+        bpen.style.borderStyle = (flag == 10 || flag == 11) ? "solid" : "none";
+        beraser.style.borderStyle = (flag == 20 || flag == 21) ? "solid" : "none";
+        bselect.style.borderStyle = (flag == 30 || flag == 31) ? "solid" : "none";
+
+        bclear.title = (flag == 30 || flag == 31) ? "Clear the selected area" : "Clear the entire image";
+        bsave.title = (flag == 30 || flag == 31) ? "Save the selected area image to the album" : "Save the entire image to the album";
+
+        if (flag != 30 && false != 31) EPE_RemoveSelector();
+    }
+    EPE_SetDrawing();
+}
+
+
+function EPE_ShowInfo(message)
+{
+    with (EPE)
+    {
+        processors.style.display = "none";
+        buttons.style.display = "none";
+        io.style.display = "";
+
+        info.innerHTML = message;
+    }
+}
+function EPE_ShowStatus(message)
+{
+    with (EPE)
+    {
+        status.innerHTML = message;
     }
 }
 
@@ -355,34 +404,7 @@ function EPE_Save(bnt)
     }
 }
 
-
-function EPE_Flip()
-{
-    with (EPE)
-    {
-        //get the original image
-        var img = new Image();
-        img.src = canvas.toDataURL('image/png');
-
-        //rotate the cavas and save the rotated image
-        canvas.width = img.height;
-        canvas.height = img.width;
-        context.rotate(90 * Math.PI / 180);
-        context.drawImage(img, 0, 0 - img.height);
-        img.src = canvas.toDataURL('image/png');
-
-        //restore canvas, use small size to enhance the perfomace
-        canvas.width = 10;
-        canvas.height = 10;
-        context.rotate(0 - 90 * Math.PI / 180);
-
-        //redraw the rotated image on the restored canvas      
-        EPE_ResizeCanvas(img.width, img.height);
-        context.drawImage(img, 0, 0);
-
-        EPE_SetDrawing();
-    }
-}
+//Scaling
 function EPE_Scale(ratio)
 {
     with (EPE)
@@ -391,91 +413,180 @@ function EPE_Scale(ratio)
         var img = new Image();
         img.src = canvas.toDataURL('image/png');
 
-        //scale the canvas and re-draw the image
-        canvas.width = canvas.width * ratio;
-        canvas.height = canvas.height * ratio;
-        context.scale(ratio, ratio);
-        context.drawImage(img, 0, 0);
-
-        //save the scaled image
-        img.src = canvas.toDataURL('image/png');
-
-        //restore canvas, use small size to enhance the perfomace
-        canvas.width = 10;
-        canvas.height = 10;
-        context.scale(ratio == 2 ? 0.5 : 2, ratio == 2 ? 0.5 : 2);
-
         //redraw the rotated image on the restored canvas        
-        EPE_ResizeCanvas(img.width, img.height);
-        context.drawImage(img, 0, 0);
+        EPE_ResizeCanvas(img.width * ratio, img.height * ratio);
 
+        context.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width * ratio, img.height * ratio);
         EPE_SetDrawing();
     }
 }
-function EPE_Command(select)
+
+//Scaling the image on the canvas with mouse wheel.
+function EPE_MouseWheel(evt)
+{
+    var ratio;
+    evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
+    if (evt.wheelDelta > 0)
+    {
+        ratio = 1.1;
+    }
+    else
+    {
+        ratio = 0.9;
+    }
+
+    EPE_Scale(ratio);
+}
+
+//Scaling the props on the canvas with mouse wheel.
+function EPE_MouseWheelProp(evt)
+{
+    evt.preventDefault();
+
+    var ratio;
+    evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
+    if (evt.wheelDelta > 0)
+    {
+        ratio = 1.1;
+    }
+    else
+    {
+        ratio = 0.9;
+    }
+
+    evt.target.style.with = parseInt(evt.target.style.with) * ratio + "px";
+    evt.target.style.height = parseInt(evt.target.style.height) * ratio + "px";
+}
+
+
+//Processing with web worker
+function EPE_OpenProcessor()
 {
     with (EPE)
     {
-        if (select.options[select.selectedIndex].value === "rotate")
+        EPE_SetFlag(40);
+        buttons.style.display = "none";
+        processors.style.display = "";
+    }
+}
+function EPE_ExitProcessor()
+{
+    with (EPE)
+    {
+        if (flag == 40)
         {
-            var m = [
-  0.393, 0.769, 0.189, 0, 0,
-  0.349, 0.686, 0.168, 0, 0,
-  0.272, 0.534, 0.131, 0, 0,
-      0, 0, 0, 1, 0,
-            ];
+            buttons.style.display = "";
+            processors.style.display = "none";
+            EPE_SetFlag(10);
+        }
+        else
+        {
+            EPE_ExitIO();
+        }
+    }
+}
 
-            //R(0-255)G(0-255)/B(0-255)/A-alpha(0-255) of each point, 4 items in a group
-            var d = context.getImageData(0, 0, canvas.width, canvas.height);
-            if (d == null) return false;
-            if (d.data.length == 0) return false;
-            d = d.data;
+function EPE_Process(option, value)
+{
+    with (EPE)
+    {
 
-            for (var i = 0; i < d.length; i += 4)
+        if (worker == null)
+        {
+            worker = new Worker("filter.js");
+            worker.onmessage = function (event)
             {
-                var r = d[i];
-                var g = d[i + 1];
-                var b = d[i + 2];
-                var a = d[i + 3];
-
-                d[i] = r * m[0] + g * m[1] + b * m[2] + a * m[3] + m[4];
-                d[i + 1] = r * m[5] + g * m[6] + b * m[7] + a * m[8] + m[9];
-                d[i + 2] = r * m[10] + g * m[11] + b * m[12] + a * m[13] + m[14];
-                d[i + 3] = r * m[15] + g * m[16] + b * m[17] + a * m[18] + m[19];
-            }
-
-            context.putImageData(d, 0, 0);
-
+                EPE_Process_Event(event.data);
+            };
         }
 
-        select.selectedIndex = 0;
+        //get the image data from canvas
+        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        if (imageData == null) return false;
+        if (imageData.data.length == 0) return false;
+        working = true;
+
+        //start the underground working thread.
+        switch (option)
+        {
+            case 1://invert
+            case 2://black-and-white
+            case 3://sepia
+            case 31://red cover
+            case 32://green cover
+            case 33://blue cover
+                worker.postMessage({ type: 1, image: imageData, option: option });
+                break;
+
+            case 4://carving indent
+            case 5://carving convex
+                worker.postMessage({ type: 2, image: imageData, blankImage: context.createImageData(canvas.width, canvas.height), option: option - 3 });
+                break;
+
+            case 6://brightening
+                worker.postMessage({ type: 3, image: imageData, value: value });
+                break;
+
+            case 7://grayscaling
+                worker.postMessage({ type: 4, image: imageData });
+                break;
+
+            case 8://flipping
+                worker.postMessage({ type: 5, image: imageData, blankImage: context.createImageData(canvas.height, canvas.width), option: option - 3 });
+                break;
+        }
+    }
+}
+function EPE_Process_Event(eventData)
+{
+    with (EPE)
+    {
+        //processing progress from background web worker.
+        if (eventData.state == 0)
+        {
+            var html = "<progress value=\"{0}\" max=\"100\"></progress>".replace("{0}", eventData.data);
+            EPE_ShowInfo(html);
+        }
+
+        //end of processing from background web worker.
+        if (eventData.state == 1)
+        {
+            working = false;
+
+            //resize the canvas if the processed image has new size.
+            if (eventData.image.width != canvas.width)
+            {
+                EPE_ResizeCanvas(eventData.image.width, eventData.image.height);
+            }
+
+            //save the processed image data to canvas
+            context.putImageData(eventData.image, 0, 0);
+            EPE_ExitIO();
+        }
     }
 }
 function EPE_ExitIO()
 {
     with (EPE)
     {
-        buttons.style.display = "";
+        if (working === true)
+        {
+            worker.terminate();
+            working = false;
+            worker = null;
+        }
+
         io.style.display = "none";
+
+        if (flag == 40)
+        {
+            processors.style.display = "";
+        }
+        else
+        {
+            buttons.style.display = "";
+        }
     }
 }
 
-
-function EPE_ShowInfo(message)
-{
-    with (EPE)
-    {
-        buttons.style.display = "none";
-        io.style.display = "";
-        info.innerHTML = message;
-    }
-}
-
-function EPE_ShowStatus(message)
-{
-    with (EPE)
-    {
-        status.innerHTML = message;
-    }
-}
 

@@ -46,12 +46,6 @@ StringBuilder.prototype.join = function (sep)
     return this.stringArray.join(sep);
 };
 
-function G2FormatStringArg(args)
-{
-
-    return str;
-}
-
 //get absolute position
 function getCoordinates(c)
 {
