@@ -1,10 +1,20 @@
-﻿/* Emily Photo Editor For Web (EPE) */
+﻿/*
+ * Emily Photo Editor For Web (EPE)
+ *
+ * https://github.com/Emily1997/emily1997.github.io
+ *
+ * Initialize the canvas
+ * Load photos from local device
+ * Save the editing image into the left side album
+ */
 
 var VTitle = "Emily Photo Editor For Web (EPE 0.1)";
 var PenColors = ["#000000", "#999999", "#CCCCCC", "#00FFFF", "#FF00FF", "#800000", "#008000", "#00FF00", "#800000", "#000080", "#808000", "#800080", "#FF0000", "#008080", "#FFFF00", "#0000FF"];
 var PenSizes = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25];
 var EPE = {};
+var props_width = 48, props_height = 48;
 
+//Initialize the image
 function EPE_Init(id, pensize, pencolor)
 {
     EPE.context = null;
@@ -19,6 +29,7 @@ function EPE_Init(id, pensize, pencolor)
     EPE.beraser = null;
     EPE.bcolor = null;
     EPE.bselect = null;
+    EPE.SelectedArea = null;
 
     EPE.colorTable = null;
     EPE.sizeTable = null;
@@ -28,35 +39,39 @@ function EPE_Init(id, pensize, pencolor)
     EPE.editing = null;//the photo that is being editted.
     EPE.worker = null;//processing worker.
     EPE.working = false;
+    EPE.blank = true;//whether the canvas is blank (no image)
 
-    //toolbar
-    EPE.toolbar = document.getElementById(id + "_toolbar");
-    EPE.bpen = document.getElementById(id + "_pen");
-    EPE.beraser = document.getElementById(id + "_eraser");
-    EPE.bselect = document.getElementById(id + "_select");
-    EPE.bcolor = document.getElementById(id + "_color");
-    EPE.info = document.getElementById(id + "_info");
-    EPE.buttons = document.getElementById(id + "_buttons");
-    EPE.uploader = document.getElementById(id + "_uploader");
-    EPE.io = document.getElementById(id + "_io");
-    EPE.bclear = document.getElementById(id + "_clear");
-    EPE.bsave = document.getElementById(id + "_save");
-    EPE.processors = document.getElementById(id + "_processors");
+    //toolbar and the 3 panels on it
+    EPE.toolbar = document.getElementById("toolbar");
+    EPE.editor = document.getElementById("editor");
+    EPE.processor = document.getElementById("processor");
+    EPE.io = document.getElementById("io");
+
+    //buttons on the editor panel
+    EPE.bpen = document.getElementById("bpen");
+    EPE.beraser = document.getElementById("beraser");
+    EPE.bselect = document.getElementById("bselect");
+    EPE.bcolor = document.getElementById("bcolor");
+    EPE.info = document.getElementById("info");
+    EPE.bclear = document.getElementById("bclear");
+    EPE.bsave = document.getElementById("bsave");
+    EPE.bresize = document.getElementById("bresize");
+    EPE.brotate = document.getElementById("brotate");
+
 
     //elements on main area
-    EPE.outalbum = document.getElementById("outalbum");
     EPE.album = document.getElementById("album");
-
-    EPE.outpad = document.getElementById("outpad");
     EPE.pad = document.getElementById("pad");
     EPE.drop = document.getElementById("drop");
     EPE.canvas = document.getElementById(id);
-
     EPE.props = document.getElementById("props");
 
     //elements on footer
-    EPE.footbar = document.getElementById(id + "_footbar");
-    EPE.status = document.getElementById(id + "_status");
+    EPE.footbar = document.getElementById("footbar");
+    EPE.status = document.getElementById("status");
+
+    //the hidden file of <input type=file>
+    EPE.uploader = document.getElementById("uploader");
 
     try
     {
@@ -75,22 +90,21 @@ function EPE_Init(id, pensize, pencolor)
             //if (bcolor != null) bcolor.style.backgroundColor = pencolor;
 
             //Resize the Canvas (because it does not support style)
-            EPE_SizeCanvas();
+            SizeCanvas();
 
             //Register the mouse event for the canvas.
-            canvas.addEventListener('mousedown', HWMouseDown, false);
-            canvas.addEventListener('mousemove', HWMouseMove, false);
-            canvas.addEventListener('mouseup', HWMouseUp, false);
-            canvas.addEventListener('mouseout', HWMouseOut, false);
-
-            pad.addEventListener('mousewheel', EPE_MouseWheel, false);
-            pad.addEventListener('wheel', EPE_MouseWheel, false);
+            canvas.addEventListener('mousedown', EPE_MouseDown, false);
+            canvas.addEventListener('mousemove', EPE_MouseMove, false);
+            canvas.addEventListener('mouseup', EPE_MouseUp, false);
+            canvas.addEventListener('mouseout', EPE_MouseOut, false);
 
             //Register the touching event for the canvas.
-            canvas.addEventListener('touchstart', HWMouseDown, false);
-            canvas.addEventListener('touchmove', HWMouseMove, false);
-            canvas.addEventListener('touchend', HWMouseUp, false);
+            canvas.addEventListener('touchstart', EPE_MouseDown, false);
+            canvas.addEventListener('touchmove', EPE_MouseMove, false);
+            canvas.addEventListener('touchend', EPE_MouseUp, false);
 
+
+            document.body.addEventListener('paste', EPE_Paste, false);
 
             for (var i = 1; i <= 30; i++)
             {
@@ -99,58 +113,85 @@ function EPE_Init(id, pensize, pencolor)
                 img.src = "props/" + i + ".png";
 
                 //Enable the img tag draggable
-                img.title = "Click or drag to the canvas to decorate your photo.\r\nDrag to props to remove.";
+                img.title = "Drag to the canvas to decorate your photo.";
                 img.draggable = true;
                 img.addEventListener('dragstart', EPE_DragStart, false);
                 props.appendChild(img);
             }
         }
 
-        //Start to drawing
+        //auto start drawing
         EPE_SetFlag(10);
     }
 }
 
 //Change the state
-function EPE_SetFlag(f)
+//The flag is the current state of the APP, 
+//the flag is changed with this function solely, so we can adjust the UI concentrically.
+function EPE_SetFlag(new_state)
 {
     with (EPE)
     {
+        //1 :load files from file input
+        //
         //10:using pen, when the mouse down, start drawing
         //11:drawing
+        //
         //20:using eraser, when the mouse down, start erasing
         //21:earsing
-        //30:using selecter, when the mouse down, start selecting
+        //
+        //30:using selecter, when the mouse down
         //31:selecting
+        //
+        //40:processor panel is opened, if it is opened the editor panel is hidden, otherwise the editor is opened.
+        //
         //91:setting pen's color
         //92:setting pen's size
+        //93:resizing
+        //94:rotating
 
-        flag = f;
+        if (new_state != 30 && new_state != 31) EPE_RemoveSelector();
 
+        flag = new_state;
+        EPE_ShowStatus(flag);
+
+        //buttons on editor panel
         bpen.style.borderStyle = (flag == 10 || flag == 11) ? "solid" : "none";
         beraser.style.borderStyle = (flag == 20 || flag == 21) ? "solid" : "none";
         bselect.style.borderStyle = (flag == 30 || flag == 31) ? "solid" : "none";
+        bresize.style.borderStyle = (flag == 93) ? "solid" : "none";
+        brotate.style.borderStyle = (flag == 94) ? "solid" : "none";
 
         bclear.title = (flag == 30 || flag == 31) ? "Clear the selected area" : "Clear the entire image";
         bsave.title = (flag == 30 || flag == 31) ? "Save the selected area image to the album" : "Save the entire image to the album";
 
-        if (flag != 30 && false != 31) EPE_RemoveSelector();
+        //editor panel
+        editor.style.display = flag != 40 ? "" : "none";
+
+        //processor panel
+        processor.style.display = flag == 40 ? "" : "none";
+
+        //the popup elements
+        if (colorTable != null) colorTable.style.display = flag == 91 ? "" : "none";
+        if (sizeTable != null) sizeTable.style.display = flag == 92 ? "" : "none";
     }
     EPE_SetDrawing();
 }
 
-
+//Display prompting or progress
 function EPE_ShowInfo(message)
 {
     with (EPE)
     {
-        processors.style.display = "none";
-        buttons.style.display = "none";
+        processor.style.display = "none";
+        editor.style.display = "none";
         io.style.display = "";
 
         info.innerHTML = message;
     }
 }
+
+//Display status at the bottom
 function EPE_ShowStatus(message)
 {
     with (EPE)
@@ -159,36 +200,34 @@ function EPE_ShowStatus(message)
     }
 }
 
-//Adjust the default size of canvas.
-function EPE_SizeCanvas()
+//Close the prompting or progress, show editor or processor.
+function EPE_ExitIO()
 {
     with (EPE)
     {
-        //save the canvas's data to hidden image, because resizing the canvas will cause the image disappear.
-        var img = new Image();
-        img.src = canvas.toDataURL('image/png');
+        //cancel the image processing if it is started
+        if (working === true)
+        {
+            worker.terminate();
+            working = false;
+            worker = null;
+        }
 
-        //Resize the Canvas (because it does not support style)
-        drop.style.width = pad.style.width;
-        drop.style.height = pad.style.height;
-        canvas.width = pad.clientWidth - 0;
-        canvas.height = pad.clientHeight - 0;
+        io.style.display = "none";
 
-        //Restore the image into the canvas
-        context.drawImage(img, 0, 0);
+        switch (flag)
+        {
+            case 1://exit loading files
+                EPE_SetFlag(0);
+                break;
 
-        EPE_SetDrawing();
-    }
-}
-function EPE_ResizeCanvas(width, height)
-{
-    with (EPE)
-    {
-        drop.style.width = width + "px";
-        drop.style.height = height + "px";
+            case 40://complete or cancel image processing and open the processor panel again
+                processor.style.display = "";
+                break;
 
-        canvas.width = width;
-        canvas.height = height;
+            default://cancel other progress, open the editor panel again
+                editor.style.display = "";
+        }
     }
 }
 
@@ -197,6 +236,9 @@ function EPE_HasData()
 {
     with (EPE)
     {
+        return blank == false;
+
+        //the following code needs a lot of time if the size of canvas is big.
         //R(0-255)G(0-255)/B(0-255)/A-alpha(0-255) of each point, 4 items in a group
         var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         if (imageData == null) return false;
@@ -231,12 +273,12 @@ function EPE_Load(bnt)
         if (GetExploreType().browser == "IE" && uploader.files.length == 0) EPE_ExitIO();
     }
 }
+
 //Load all the photos from the file control
 function EPE_OpenPhotos(input)
 {
     with (EPE)
     {
-        var reader = new FileReader();
         index = 0;
 
         if (uploader.files.length == 0)
@@ -245,31 +287,54 @@ function EPE_OpenPhotos(input)
         }
         else
         {
-            EPE_ShowInfo("Opening " + uploader.files[0].name + "...");
-            reader.readAsDataURL(uploader.files[0]);
+            EPE_SetFlag(1);
+            EPE_ReadFile();
         }
+    }
+}
+function EPE_ReadFile()
+{
+    with (EPE)
+    {
+        //all files had been loaded into album.
+        if (index >= uploader.files.length)
+        {
+            uploader.value = null;
+            EPE_ExitIO();
+            return;
+        }
+
+        EPE_ShowInfo("Opening " + uploader.files[index].name);
+
+        var reader = new FileReader();
+        reader.readAsDataURL(uploader.files[index]);
 
         //the onload event happen after the file has been loaded.
         reader.onload = function ()
         {
+            //add file had been read into album.
             var img = new Image();
-            img.src = this.result;
+            img.src = this.result;//it is the data read from the file.
             EPE_AddToAlbum(img);
 
-            index++;
-            if (index >= uploader.files.length)
+            if (flag == 1)
             {
-                uploader.value = null;
-                EPE_ExitIO();
+                //read next file
+                index++;
+                //use timeout to read next file, it make the user can cancel the loading.
+                setTimeout(EPE_ReadFile, 500);
             }
             else
             {
-                EPE_ShowInfo("Opening " + uploader.files[index].name + "...");
-                reader.readAsDataURL(uploader.files[index]);
+                //cancelled
+                uploader.value = null;
+                EPE_ExitIO();
             }
         }
     }
 }
+
+//add an image into album
 function EPE_AddToAlbum(img)
 {
     with (EPE)
@@ -286,6 +351,7 @@ function EPE_AddToAlbum(img)
         album.appendChild(img);
     }
 }
+
 //Edit the photos
 function EPE_EditPhoto(img)
 {
@@ -323,24 +389,28 @@ function EPE_EditPhoto(img)
 
         //copy the photo into the canvas
         context.drawImage(vimg, 0, 0);
+        blank = false;
 
         //Restore the settings of canvas 
         EPE_SetDrawing();
     }
 }
+
+//save image in the canvas into album
 function EPE_Save(bnt)
 {
     with (EPE)
     {
-        if (flag == 30 && selectingDiv != null)
+        //save the selecting area into the alumn
+        if (flag == 30 && SelectedArea != null)
         {
             var img = new Image();
             img.src = canvas.toDataURL();
 
-            var x = parseInt(selectingDiv.style.left);
-            var y = parseInt(selectingDiv.style.top);
-            var w = parseInt(selectingDiv.style.width);
-            var h = parseInt(selectingDiv.style.height);
+            var x = parseInt(SelectedArea.style.left);
+            var y = parseInt(SelectedArea.style.top);
+            var w = parseInt(SelectedArea.style.width);
+            var h = parseInt(SelectedArea.style.height);
 
             var imgData = context.getImageData(x, y, w, h);
             canvas.width = w;
@@ -351,12 +421,11 @@ function EPE_Save(bnt)
             img2.src = canvas.toDataURL();
             EPE_AddToAlbum(img2);
 
-            canvas.width = img.width;
-            canvas.height = img.height;
-            context.drawImage(img, 0, 0);
-            EPE_SizeCanvas();
-
             EPE_RemoveSelector();
+
+            ResizeCanvas(img.width, img.height);
+            context.drawImage(img, 0, 0);
+
             return;
         }
 
@@ -369,7 +438,12 @@ function EPE_Save(bnt)
             {
                 if (p.tagName == "IMG")
                 {
-                    context.drawImage(p, parseInt(p.style.left.replace("px", "")), parseInt(p.style.top.replace("px", "")));
+                    var x = parseInt(p.style.left);
+                    var y = parseInt(p.style.top);
+                    var w = parseInt(p.style.width);
+                    var h = parseInt(p.style.height);
+
+                    context.drawImage(p, 0, 0, props_width, props_height, x, y, w, h);
                     drop.removeChild(p);
                     i--;
                 }
@@ -381,8 +455,6 @@ function EPE_Save(bnt)
             alert("There is nothing on the canvas.");
             return;
         }
-
-
 
         if (editing != null)
         {
@@ -399,43 +471,132 @@ function EPE_Save(bnt)
 
         //clear the canvas
         context.clearRect(0, 0, canvas.width, canvas.height);
+        blank = true;
 
-        EPE_SizeCanvas();
+        SizeCanvas();
     }
 }
 
-//Scaling
-function EPE_Scale(ratio)
+//clear image on the canvas
+function EPE_Clear(bnt)
 {
     with (EPE)
     {
-        //get the original image
-        var img = new Image();
-        img.src = canvas.toDataURL('image/png');
-
-        //redraw the rotated image on the restored canvas        
-        EPE_ResizeCanvas(img.width * ratio, img.height * ratio);
-
-        context.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width * ratio, img.height * ratio);
-        EPE_SetDrawing();
+        if (flag == 30)
+        {
+            //clear the image of selected area
+            if (SelectedArea != null)
+            {
+                if (confirm('Are you sure to clear the selected area?'))
+                {
+                    context.clearRect(parseInt(SelectedArea.style.left), parseInt(SelectedArea.style.top), parseInt(SelectedArea.style.width), parseInt(SelectedArea.style.height));
+                    EPE_RemoveSelector();
+                }
+            }
+        }
+        else
+        {
+            //clear the entire canvas
+            if (confirm('Are you sure to clear the photo?'))
+            {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                blank = true;
+                SizeCanvas();
+            }
+        }
     }
 }
 
-//Scaling the image on the canvas with mouse wheel.
-function EPE_MouseWheel(evt)
+//open context menu at one image and click [save image]
+//paste on EPE or click paste button (for IE only)
+//the image from the internet will be added into your album.
+function EPE_Paste(evt)
 {
-    var ratio;
-    evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
-    if (evt.wheelDelta > 0)
+    var clipboardData = window.clipboardData; // IE  
+    if (!clipboardData) clipboardData = evt.clipboardData;//Chrome
+
+    if (clipboardData)
     {
-        ratio = 1.1;
+        var url = clipboardData.getData('Text');
+        if (url)
+        {
+            var img = new Image();
+            img.src = url;
+            img.onload = function () { EPE_AddToAlbum(img); };
+            img.onerror = function () { EPE_ShowInfo("Copy an image on web pages first."); };
+        }
     }
     else
     {
-        ratio = 0.9;
+        EPE_ShowInfo("Copy an image on web pages first.");
     }
+}
 
-    EPE_Scale(ratio);
+var startevt;
+function EPE_DragStart(evt)
+{
+    startevt = evt;
+    evt.dataTransfer.setData("Text", evt.target.id);
+}
+function EPE_Drop(evt)
+{
+    evt.preventDefault();
+    var id = evt.dataTransfer.getData("Text");
+    if (id.indexOf("props") == 0)
+    {
+        //Add props into canvas
+        var prop = document.getElementById(id);
+
+        var img = new Image();
+        img.id = "selected_" + id;//Set up a new id to identify
+        img.src = prop.src;
+        img.style.position = "absolute";
+
+        img.style.left = evt.layerX + "px";
+        img.style.top = evt.layerY + "px";
+
+        img.title = "Drag to adjust the location.\r\nUse the mouse wheel to adjust size.\r\nDrag to toolbar to remove.";
+        img.draggable = true;
+        img.style.width = "50px";
+        img.style.height = "50px";
+        img.addEventListener('dragstart', EPE_DragStart, false);
+        img.onmousewheel = function (event) { EPE_MouseWheelProp(event); }
+
+        drop.appendChild(img);
+
+        blank = false;
+    }
+    else
+    {
+        if (id.indexOf("selected_") == 0)
+        {
+            //move selected props
+            var img = document.getElementById(id);
+
+            var x1 = startevt.layerX;
+            var x2 = evt.layerX;
+            var y1 = startevt.layerY;
+            var y2 = evt.layerY;
+            img.style.left = parseInt(img.style.left) + x2 - x1 + "px";
+            img.style.top = parseInt(img.style.top) + y2 - y1 + "px";
+        }
+        else
+        {
+            //Add photo
+            EPE_EditPhoto(document.getElementById(id));
+        }
+    }
+}
+function EPE_DropOut(evt)
+{
+    evt.preventDefault();
+    var id = evt.dataTransfer.getData("Text");
+    var img = document.getElementById(id);
+    img.parentElement.removeChild(img);
+}
+function EPE_AllowDrop(evt)
+{
+    evt.preventDefault();
 }
 
 //Scaling the props on the canvas with mouse wheel.
@@ -454,139 +615,77 @@ function EPE_MouseWheelProp(evt)
         ratio = 0.9;
     }
 
-    evt.target.style.with = parseInt(evt.target.style.with) * ratio + "px";
+    evt.target.style.width = parseInt(evt.target.style.width) * ratio + "px";
     evt.target.style.height = parseInt(evt.target.style.height) * ratio + "px";
+
 }
 
-
-//Processing with web worker
-function EPE_OpenProcessor()
+function EPE_StartResize()
 {
     with (EPE)
     {
-        EPE_SetFlag(40);
-        buttons.style.display = "none";
-        processors.style.display = "";
-    }
-}
-function EPE_ExitProcessor()
-{
-    with (EPE)
-    {
-        if (flag == 40)
+        if (flag != 93)
         {
-            buttons.style.display = "";
-            processors.style.display = "none";
-            EPE_SetFlag(10);
+            EPE_SetFlag(93);
+            pad.addEventListener('mousewheel', EPE_MouseWheel, false);
         }
         else
         {
-            EPE_ExitIO();
+            pad.removeEventListener('mousewheel', EPE_MouseWheel, false);
+            EPE_SetFlag(0);
         }
     }
 }
 
-function EPE_Process(option, value)
+var rotatingimg;
+var rotatingratio;
+function EPE_StartRotate()
 {
     with (EPE)
     {
-
-        if (worker == null)
+        if (flag != 94)
         {
-            worker = new Worker("filter.js");
-            worker.onmessage = function (event)
-            {
-                EPE_Process_Event(event.data);
-            };
-        }
+            EPE_SetFlag(94);
+            pad.addEventListener('mousewheel', EPE_Rotate, false);
 
-        //get the image data from canvas
-        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        if (imageData == null) return false;
-        if (imageData.data.length == 0) return false;
-        working = true;
+            rotatingimg = new Image();
+            rotatingimg.src = canvas.toDataURL();
 
-        //start the underground working thread.
-        switch (option)
-        {
-            case 1://invert
-            case 2://black-and-white
-            case 3://sepia
-            case 31://red cover
-            case 32://green cover
-            case 33://blue cover
-                worker.postMessage({ type: 1, image: imageData, option: option });
-                break;
+            var size = Math.sqrt(rotatingimg.width * rotatingimg.width + rotatingimg.height * rotatingimg.height);
+            ResizeCanvas(size, size);
 
-            case 4://carving indent
-            case 5://carving convex
-                worker.postMessage({ type: 2, image: imageData, blankImage: context.createImageData(canvas.width, canvas.height), option: option - 3 });
-                break;
-
-            case 6://brightening
-                worker.postMessage({ type: 3, image: imageData, value: value });
-                break;
-
-            case 7://grayscaling
-                worker.postMessage({ type: 4, image: imageData });
-                break;
-
-            case 8://flipping
-                worker.postMessage({ type: 5, image: imageData, blankImage: context.createImageData(canvas.height, canvas.width), option: option - 3 });
-                break;
-        }
-    }
-}
-function EPE_Process_Event(eventData)
-{
-    with (EPE)
-    {
-        //processing progress from background web worker.
-        if (eventData.state == 0)
-        {
-            var html = "<progress value=\"{0}\" max=\"100\"></progress>".replace("{0}", eventData.data);
-            EPE_ShowInfo(html);
-        }
-
-        //end of processing from background web worker.
-        if (eventData.state == 1)
-        {
-            working = false;
-
-            //resize the canvas if the processed image has new size.
-            if (eventData.image.width != canvas.width)
-            {
-                EPE_ResizeCanvas(eventData.image.width, eventData.image.height);
-            }
-
-            //save the processed image data to canvas
-            context.putImageData(eventData.image, 0, 0);
-            EPE_ExitIO();
-        }
-    }
-}
-function EPE_ExitIO()
-{
-    with (EPE)
-    {
-        if (working === true)
-        {
-            worker.terminate();
-            working = false;
-            worker = null;
-        }
-
-        io.style.display = "none";
-
-        if (flag == 40)
-        {
-            processors.style.display = "";
+            rotatingratio = 0;
+            context.drawImage(rotatingimg, 0, 0);
         }
         else
         {
-            buttons.style.display = "";
+            EPE_SetFlag(0);
+            pad.removeEventListener('mousewheel', EPE_Rotate, false);
         }
     }
 }
+//Rotating the image on the canvas with mouse wheel.
+function EPE_Rotate(evt)
+{
+    with (EPE)
+    {
+        evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
+        if (evt.wheelDelta > 0)
+        {
+            rotatingratio += 10;
+        }
+        else
+        {
+            rotatingratio -= 10;
+        }
 
 
+        //ResizeCanvas(img.width*2, img.height*2);
+        context.save();
+        context.clearRect(0, 0, canvas.width, canvas.height);//清空内容
+        context.translate(canvas.clientWidth / 2, canvas.clientHeight / 2);//中心坐标
+        context.rotate(rotatingratio * Math.PI / 180);//旋转
+        context.drawImage(rotatingimg, -rotatingimg.width / 2, -rotatingimg.height / 2);//居中画图
+        context.restore();
+    }
+}

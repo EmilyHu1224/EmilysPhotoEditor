@@ -1,4 +1,11 @@
-﻿body
+﻿/*
+ * Emily Photo Editor For Web (EPE)
+ *
+ * https://github.com/Emily1997/emily1997.github.io
+ *
+ */
+
+body
 {
     margin: 0px;
     border: 0px;
@@ -21,29 +28,29 @@
     background-color: #eeeeee;
 }
 
-#c_buttons 
+#editor 
 {
     text-align: right;
 }
 
-#c_buttons img
+#editor img
 {
     width: 30px;
     height: 30px;
 }
 
-#c_processors 
+#processor 
 {
     text-align: right;
 }
 
-#c_processors img
+#processor img
 {
     width: 30px;
     height: 30px;
 }
 
-#c_io img
+#io img
 {
     width: 30px;
     height: 30px;
@@ -155,7 +162,7 @@
 }
 
 
-.selectingDiv
+.SelectedArea
 {
     border:1px  solid red;
 }

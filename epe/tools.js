@@ -1,4 +1,11 @@
-﻿
+﻿/*
+ * Emily Photo Editor For Web (EPE)
+ *
+ * https://github.com/Emily1997/emily1997.github.io
+ *
+ */
+
+
 //Utility functions
 function IsEmptyOrNull(obj)
 {

@@ -1,22 +1,26 @@
-﻿/* Emily Photo Editor For Web (EPE) */
-/* Drawing */
-var selectingDiv;
+﻿/*
+ * Emily Photo Editor For Web (EPE)
+ *
+ * https://github.com/Emily1997/emily1997.github.io
+ *
+ * Process the mouse events
+ * Drawing, erasing, selecting
+ * Set pen's size or color
+*/
 
 
-
-//Event processing
-function HWMouseDown(evt)
+//Mouse event responsing
+function EPE_MouseDown(evt)
 {
     evt.preventDefault();
     with (EPE)
     {
-        EPE_CloseSetting()
-
         if (flag == 10 || flag == 20 || flag == 30)
         {
-            flag++;//Start drawing, earsing, selecting
+            //Start drawing, earsing, selecting
+            EPE_SetFlag(flag + 1);
 
-            LastPose = HWPose(evt);
+            LastPose = EPE_Pose(evt);
 
             if (flag == 31)
             {
@@ -25,7 +29,7 @@ function HWMouseDown(evt)
         }
     }
 }
-function HWMouseMove(evt)
+function EPE_MouseMove(evt)
 {
     evt.preventDefault();
 
@@ -33,7 +37,7 @@ function HWMouseMove(evt)
     {
         if (flag == 11)//Drawing
         {
-            var p = HWPose(evt);
+            var p = EPE_Pose(evt);
 
             if (LastPose != null)
             {
@@ -44,24 +48,27 @@ function HWMouseMove(evt)
             }
 
             LastPose = p;
+
+            blank = false;
         }
         if (flag == 21)//Erasing
         {
-            var p = HWPose(evt);
+            var p = EPE_Pose(evt);
             context.clearRect(p.x, p.y, 10, 10);
         }
 
         if (flag == 31)//Selecting
         {
-            var p = HWPose(evt);
+            var p = EPE_Pose(evt);
 
-            if (selectingDiv == null)
+            if (SelectedArea == null)
             {
-                selectingDiv = document.createElement("div");
-                selectingDiv.className = "selectingDiv";
-                selectingDiv.style.position = "absolute";
-                selectingDiv.addEventListener('mousedown', EPE_ReSelect, false);
-                drop.appendChild(selectingDiv);
+                SelectedArea = document.createElement("div");
+                SelectedArea.className = "SelectedArea";
+                SelectedArea.style.position = "absolute";
+                //if the mouse move into the selected area, the canvas can not capture the event, so remove the selected area to re-select.
+                SelectedArea.addEventListener('mousedown', EPE_RemoveSelector, false);
+                drop.appendChild(SelectedArea);
                 EPE_ShowInfo("Press mouse key and drag a rectangle...");
             }
             var x1 = LastPose.x;
@@ -70,43 +77,43 @@ function HWMouseMove(evt)
             var y2 = p.y;
             if (x1 > x2) { var t = x2; x2 = x1; x1 = t; }
             if (y1 > y2) { var t = y2; y2 = y1; y1 = t; }
-            //make sure your mouse is out of the range of selectingDiv, so the mouseout will not happen.
+            //make sure your mouse is out of the range of SelectedArea, so the mouseout will not happen.
             x1++; y1++;
             x2--; y2--;
 
-            selectingDiv.style.left = x1 + "px";
-            selectingDiv.style.top = y1 + "px";
-            selectingDiv.style.width = x2 - x1 - 1 + "px";
-            selectingDiv.style.height = y2 - y1 - 1 + "px";
+            SelectedArea.style.left = x1 + "px";
+            SelectedArea.style.top = y1 + "px";
+            SelectedArea.style.width = x2 - x1 - 1 + "px";
+            SelectedArea.style.height = y2 - y1 - 1 + "px";
         }
     }
 }
-
-function HWMouseUp(evt)
+function EPE_MouseUp(evt)
 {
     evt.preventDefault();
 
     with (EPE)
     {
         //Stop drawing, erasing, selecting
-        if (flag == 11 || flag == 21 || flag == 31) flag--;
+        if (flag == 11 || flag == 21 || flag == 31) EPE_SetFlag(flag - 1);;
         if (flag == 30) EPE_ExitIO();
     }
 }
-function HWMouseOut(evt)
+function EPE_MouseOut(evt)
 {
     with (EPE)
     {
         //Stop drawing, erasing, selecting
-        if (flag == 11 || flag == 21 || flag == 31) flag--;
+        if (flag == 11 || flag == 21 || flag == 31) EPE_SetFlag(flag - 1);
         if (flag == 30) EPE_ExitIO();
     }
 }
+
 //Calculate the location of mouse or hand
-function HWPose(evt)
+function EPE_Pose(evt)
 {
     var x, y;
-    if (HWIsTouch(evt))
+    if (EPE_IsTouch(evt))
     {
         var c = G2GetPose(EPE.canvas);
         x = evt.touches[0].pageX - c.x;
@@ -120,7 +127,7 @@ function HWPose(evt)
 
     return { x: x, y: y };
 }
-function HWIsTouch(evt)
+function EPE_IsTouch(evt)
 {
     var type = evt.type;
     if (type.indexOf('touch') >= 0)
@@ -133,12 +140,11 @@ function HWIsTouch(evt)
     }
 }
 
-//Response the buttons in the toolbar
+//Response the buttons in the editor panel
 function EPE_Pen(bnt)
 {
     with (EPE)
     {
-        EPE_CloseSetting();
         EPE_SetFlag(10);//Enable pen
     }
 }
@@ -146,15 +152,14 @@ function EPE_Eraser(bnt)
 {
     with (EPE)
     {
-        EPE_CloseSetting();
         EPE_SetFlag(20);//Enable earser
     }
 }
+
 function EPE_Select(bnt)
 {
     with (EPE)
     {
-        EPE_CloseSetting();
         EPE_SetFlag(30);//Enable selector
 
         EPE_RemoveSelector();
@@ -162,47 +167,23 @@ function EPE_Select(bnt)
         EPE_ShowInfo("Press mouse key and drag a rectangle...");
     }
 }
-function EPE_ReSelect(evt)
-{
-    with (EPE)
-    {
-        EPE_RemoveSelector();
-    }
-}
+
 function EPE_RemoveSelector()
 {
     with (EPE)
     {
-        if (selectingDiv != null)
+        if (SelectedArea != null)
         {
-            drop.removeChild(selectingDiv);
-            selectingDiv = null;
+            drop.removeChild(SelectedArea);
+            SelectedArea = null;
         }
     }
 }
-function EPE_Clear(bnt)
-{
-    with (EPE)
-    {
-        EPE_CloseSetting();
 
-        if (flag == 30)
-        {
-            context.clearRect(parseInt(selectingDiv.style.left), parseInt(selectingDiv.style.top), parseInt(selectingDiv.style.width), parseInt(selectingDiv.style.height));
-            EPE_RemoveSelector();
-        }
-        else
-        {
-            context.clearRect(0, 0, canvas.width, canvas.height);
-        }
-    }
-}
 function EPE_SelectColor(bnt)
 {
     with (EPE)
     {
-        if (EPE_CloseSetting()) return;
-
         if (colorTable != null)
         {
             if (colorTable.style.display != "none")
@@ -242,23 +223,21 @@ function EPE_SetColor(td)
 {
     with (EPE)
     {
-        EPE_SetFlag(10);
-        colorTable.style.display = "none";
-
         if (td)
         {
             var color = td.style.backgroundColor;
+            pencolor = color;
             context.strokeStyle = color;
             //bcolor.style.backgroundColor = color;
         }
+
+        EPE_SetFlag(10);
     }
 }
 function EPE_PenSize(bnt)
 {
     with (EPE)
     {
-        if (EPE_CloseSetting()) return;
-
         var html = new StringBuilder();
         html.append("<table class=\"SizePicker\">");
 
@@ -292,30 +271,16 @@ function EPE_SetPenSize(size)
 {
     with (EPE)
     {
-        EPE_SetFlag(10);
-        sizeTable.style.display = "none";
-
         if (size)
         {
+            pensize = size;
             context.lineWidth = size;
         }
+        EPE_SetFlag(10);
     }
 }
-function EPE_CloseSetting()
-{
-    with (EPE)
-    {
-        if (flag == 91 || flag == 92)
-        {
-            if (colorTable != null) colorTable.style.display = "none";
-            if (sizeTable != null) sizeTable.style.display = "none";
 
-            EPE_SetFlag(10);
-            return true;
-        }
-    }
-    return false;
-}
+//set the pen style of the canvas
 function EPE_SetDrawing()
 {
     with (EPE)

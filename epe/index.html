@@ -6,38 +6,42 @@
     <script type="text/ecmascript" src="layout.js"></script>
     <script type="text/ecmascript" src="epe.js"></script>
     <script type="text/ecmascript" src="draw.js"></script>
-    <script type="text/ecmascript" src="drag.js"></script>
+    <script type="text/ecmascript" src="process.js"></script>
     <script type="text/ecmascript" src="tools.js"></script>
     <link rel="stylesheet" type="text/css" href="epe.css" />
 
 </head>
 <body onload="EPE_Init('c',  10, '#000080')">
     <table cellpadding="0" cellspacing="0">
-        <tr id="c_toolbar" class="Toolbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
+        <tr id="toolbar" class="Toolbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
             <td colspan="3">
                 <table style="width: 100%">
                     <tr>
                         <td style="padding-left: 5px; white-space: nowrap">
                             <span><a href="../index.html">
                                 <img src="images/home.png" style="width: 40px; height: 40px; padding-left: 10px;" /></a></span>
-                            <span id="c_title">
+                            <span>
                                 <img src="images/title.png" style="width: 400px; height: 50px; padding-right: 10px" /></span>
                         </td>
-                        <td id="c_buttons">
+                        <td id="editor">
                             <img src="images/open.png" onclick="EPE_Load(this)" title="Open your photos" />
-                            <img id="c_pen" src="images/pen.png" onclick="EPE_Pen(this)" title="Start to draw" />
-                            <img id="c_eraser" src="images/eraser.png" onclick="EPE_Eraser(this)" title="Start to erase" />
-                            <img id="c_select" src="images/select.png" onclick="EPE_Select(this)" title="Select a block" />
-                            <img id="c_color" src="images/pencolor.png" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
-                            <img id="c_size" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
-                            <img id="c_flip" src="images/flip.png" onclick="EPE_Process(8)" title="Flip the photo" />
-                            <img id="c_scaleup" src="images/scaleup.png" onclick="EPE_Scale(2)" title="Scale 100%" />
-                            <img id="c_scaledown" src="images/scaledown.png" onclick="EPE_Scale(0.5)" title="Scale 50%" />
-                            <img id="c_processing" src="images/processing.png" onclick="EPE_OpenProcessor()" title="Processing the photo..." />
-                            <img id="c_clear" src="images/clear.png" onclick="if(confirm('Are you sure to clear the photo?')) EPE_Clear(this)" title="Clear the photo" />
-                            <img id="c_save" src="images/save.png" onclick="EPE_Save(this)" title="Save to the album" />
+                            <img id="bpen" src="images/pen.png" onclick="EPE_Pen(this)" title="Start to draw" />
+                            <img id="beraser" src="images/eraser.png" onclick="EPE_Eraser(this)" title="Start to erase" />
+                            <img id="bselect" src="images/select.png" onclick="EPE_Select(this)" title="Select a block" />
+                            <img id="bresize" src="images/resize.png" onclick="EPE_StartResize()" title="Resize the canvas with mouse wheel..." />
+                            <img id="brotate" src="images/rotate.png" onclick="EPE_StartRotate()" title="Rotate the photo with mouse wheel..." />
+                            <img id="bcolor" src="images/pencolor.png" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
+                            <img id="bsize" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
+                            <img id="bflip" src="images/flip.png" onclick="EPE_Process(8)" title="Flip the photo" />
+                            <img id="bscaleup" src="images/scaleup.png" onclick="EPE_Scale(2)" title="Scale 100%" />
+                            <img id="bscaledown" src="images/scaledown.png" onclick="EPE_Scale(0.5)" title="Scale 50%" />
+                            <img id="bprocessing" src="images/processing.png" onclick="EPE_OpenProcessor()" title="Processing the photo..." />
+                            <img id="bclear" src="images/clear.png" onclick="EPE_Clear(this)" title="Clear the photo" />
+                            <img id="bsave" src="images/save.png" onclick="EPE_Save(this)" title="Save to the album" />
+                            <img  src="images/paste.png" onclick="EPE_Paste(this)" title="Paste a photo from other site" />
+                            <img  src="images/fb.png" onclick="EPE_FB(this)" title="Share your photo to facebook" />
                         </td>
-                        <td id="c_processors" style="display: none">
+                        <td id="processor" style="display: none">
                             <img src="images/invert.png" onclick="EPE_Process(1)" title="Invert" />
                             <img src="images/blackwhite.png" onclick="EPE_Process(2)" title="Black-and-white" />
                             <img src="images/sepia.png" onclick="EPE_Process(3)" title="Sepia" />
@@ -45,15 +49,16 @@
                             <img src="images/convex.png" onclick="EPE_Process(5)" title="Carving convexly" />
                             <img src="images/brightup.png" onclick="EPE_Process(6,50)" title="More brighter" />
                             <img src="images/brightdown.png" onclick="EPE_Process(6,-50)" title="Less brighter" />
-                            <img src="images/gray.png" onclick="EPE_Process(7)" title="Gray scaling" />
+                            <img src="images/gray.png" onclick="EPE_Process(30)" title="Gray scaling" />
                             <img src="images/redcover.png" onclick="EPE_Process(31)" title="Red covering" />
                             <img src="images/greencover.png" onclick="EPE_Process(32)" title="Green covering" />
                             <img src="images/bluecover.png" onclick="EPE_Process(33)" title="Blue covering" />
-                            <img src="images/exit.png" onclick="EPE_ExitProcessor()" style="padding-left: 30px;" title="Close processors" />
+                            <img src="images/silhouette.png" onclick="EPE_Process(34)" title="Silhouette (Black-and-white without gray scale)" />                            
+                            <img src="images/exit.png" onclick="EPE_ExitProcessor()" style="padding-left: 30px;" title="Close processor panel" />
                         </td>
-                        <td id="c_io" style="text-align: right; display: none">                            
-                            <span id="c_info" style="font-size: 14pt; font-family: MV Boli"></span>
-                            <img id="c_exit" src="images/exit.png" onclick="EPE_ExitIO(this)" style="padding-left: 30px;" title="Cancel and return" />
+                        <td id="io" style="text-align: right; display: none">                            
+                            <span id="info" style="font-size: 14pt; font-family: MV Boli"></span>
+                            <img src="images/exit.png" onclick="EPE_ExitIO(this)" style="padding-left: 30px;" title="Cancel and return" />
                         </td>
                     </tr>
                 </table>
@@ -74,18 +79,14 @@
                 <div id="props" title="Props: select a property and drag to the canvas to decorate your photo."></div>
             </td>
         </tr>
-        <tr id="c_footbar" class="Footbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
+        <tr id="footbar" class="Footbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
             <td colspan="3" style="text-align: center; vertical-align: middle; white-space: nowrap; width: 100%">
-                <span id="c_status"></span>
+                <span id="status"></span>
                 <span style="padding-left: 50px;">HTML APP</span>
                 <span style="padding-left: 50px;">HTML5+JavaScript</span>
                 <span style="padding-left: 50px;"><a href="http://github.com/emily1997" target="_blank">
                     <img src="../images/GitHub.ico" style="vertical-align: middle; padding-right: 10px;" />Follow me on GitHut</a></span>
-                <span style="padding-left: 50px;">
-                    <a href="mailto:emilyhu1997@outlook.com">
-                        <img src="images/email.png" style="width: 20px; height: 20px; vertical-align: middle" />
-                    </a>
-                </span>
+                <span style="padding-left: 50px;"><a href="mailto:emilyhu1997@outlook.com"><img src="images/email.png" style="width: 20px; height: 20px; vertical-align: middle" /></a></span>
                 <span style="padding-left: 50px;">
                     <a href="readme.txt" target="_blank">
                         <img src="images/help.png" style="width: 20px; height: 20px; vertical-align: middle" title="Help information" /></a>
@@ -93,6 +94,6 @@
             </td>
         </tr>
     </table>
-    <input id="c_uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
+    <input id="uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
 </body>
 </html>
