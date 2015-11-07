@@ -152,6 +152,11 @@ function EPE_SetFlag(new_state)
 
         if (new_state != 30 && new_state != 31) EPE_RemoveSelector();
 
+        if (flag == 93 && new_state != 93) pad.removeEventListener('mousewheel', EPE_MouseWheel, false);
+     
+        if (flag == 94 && new_state != 94) pad.removeEventListener('mousewheel', EPE_Rotate, false);
+       
+
         flag = new_state;
         EPE_ShowStatus(flag);
 
@@ -393,6 +398,8 @@ function EPE_EditPhoto(img)
 
         //Restore the settings of canvas 
         EPE_SetDrawing();
+
+        EPE_SetFlag(0);
     }
 }
 
@@ -599,27 +606,27 @@ function EPE_AllowDrop(evt)
     evt.preventDefault();
 }
 
-//Scaling the props on the canvas with mouse wheel.
-function EPE_MouseWheelProp(evt)
+//Scaling (processing the image by the canvas directly, not using web worker)
+function EPE_Scale(ratio)
 {
-    evt.preventDefault();
-
-    var ratio;
-    evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
-    if (evt.wheelDelta > 0)
+    with (EPE)
     {
-        ratio = 1.1;
-    }
-    else
-    {
-        ratio = 0.9;
-    }
+        //get the original image
+        var img = new Image();
+        img.src = canvas.toDataURL('image/png');
+        if ((img.width * ratio) > 10 && img.height * ratio > 10)
+        {
+            //redraw the rotated image on the restored canvas        
+            ResizeCanvas(img.width * ratio, img.height * ratio);
 
-    evt.target.style.width = parseInt(evt.target.style.width) * ratio + "px";
-    evt.target.style.height = parseInt(evt.target.style.height) * ratio + "px";
-
+            //drawImage can scale the source image to any size.
+            context.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width * ratio, img.height * ratio);
+            EPE_SetDrawing();
+        }
+    }
 }
 
+//start to resize canvas with wheel.
 function EPE_StartResize()
 {
     with (EPE)
@@ -637,6 +644,25 @@ function EPE_StartResize()
     }
 }
 
+//Scaling the image on the canvas with mouse wheel.
+function EPE_MouseWheel(evt)
+{
+    var ratio;
+    evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
+    if (evt.wheelDelta > 0)
+    {
+        ratio = 1.1;
+    }
+    else
+    {
+        ratio = 0.9;
+    }
+
+    EPE_Scale(ratio);
+}
+
+
+//Rotating the image on the canvas with mouse wheel.
 var rotatingimg;
 var rotatingratio;
 function EPE_StartRotate()
@@ -664,7 +690,6 @@ function EPE_StartRotate()
         }
     }
 }
-//Rotating the image on the canvas with mouse wheel.
 function EPE_Rotate(evt)
 {
     with (EPE)
@@ -689,3 +714,25 @@ function EPE_Rotate(evt)
         context.restore();
     }
 }
+
+
+//Scaling the props on the canvas with mouse wheel.
+function EPE_MouseWheelProp(evt)
+{
+    evt.preventDefault();
+
+    var ratio;
+    evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
+    if (evt.wheelDelta > 0)
+    {
+        ratio = 1.1;
+    }
+    else
+    {
+        ratio = 0.9;
+    }
+
+    evt.target.style.width = parseInt(evt.target.style.width) * ratio + "px";
+    evt.target.style.height = parseInt(evt.target.style.height) * ratio + "px";
+}
+
