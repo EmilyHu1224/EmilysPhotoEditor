@@ -8,11 +8,18 @@
  * Save the editing image into the left side album
  */
 
-var VTitle = "Emily Photo Editor For Web (EPE 0.1)";
+var VTitle = "Emily Photo Editor For Web (EPE 2.0)";
 var PenColors = ["#000000", "#999999", "#CCCCCC", "#00FFFF", "#FF00FF", "#800000", "#008000", "#00FF00", "#800000", "#000080", "#808000", "#800080", "#FF0000", "#008080", "#FFFF00", "#0000FF"];
 var PenSizes = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25];
 var EPE = {};
-var props_width = 48, props_height = 48;
+
+//the count of props
+var props_count = 20;
+
+//the original size of props
+var prop_width = 48, prop_height = 48;
+
+
 
 var state_string = [];
 state_string[0] = "Ready";
@@ -30,6 +37,8 @@ state_string[93] = "Resizing";
 state_string[94] = "Rotating";
 state_string[95] = "Picking color";
 
+
+
 //Initialize the image
 function EPE_Init(id, pensize, pencolor)
 {
@@ -46,9 +55,9 @@ function EPE_Init(id, pensize, pencolor)
     EPE.beraser = null;
     EPE.bselect = null;
     EPE.SelectedArea = null;
-
     EPE.colorTable = null;
     EPE.sizeTable = null;
+
 
     EPE.no = 0;//the auto-increasing number for the id of photo
     EPE.index = 0;//the index of selected photos is being added into album.
@@ -58,6 +67,7 @@ function EPE_Init(id, pensize, pencolor)
     EPE.blank = true;//whether the canvas is blank (no image)
     EPE.rotating_img = null;
     EPE.rotating_radian = 0;
+    EPE.DragStartEvent = null;
 
 
     //toolbar and the 3 panels on it
@@ -93,6 +103,7 @@ function EPE_Init(id, pensize, pencolor)
     //the hidden file of <input type=file>
     EPE.uploader = document.getElementById("uploader");
 
+
     try
     {
         //Initialize canvas, it will throw an exception if the browser does not support HTML5.
@@ -120,13 +131,13 @@ function EPE_Init(id, pensize, pencolor)
             canvas.addEventListener('touchmove', EPE_MouseMove, false);
             canvas.addEventListener('touchend', EPE_MouseUp, false);
 
-
-            td = document.getElementById("td");
-            td.addEventListener('mousemove', EPE_MouseMoveTD, false);
+            document.body.addEventListener('mousedown', EPE_MouseDownResize, false);
+            document.body.addEventListener('mousemove', EPE_MouseMoveResize, false);
+            document.body.addEventListener('mouseup', EPE_MouseUpResize, false);
 
             document.body.addEventListener('paste', EPE_Paste, false);
 
-            for (var i = 1; i <= 30; i++)
+            for (var i = 1; i <= props_count; i++)
             {
                 var img = new Image();
                 img.id = "props" + i;
@@ -174,6 +185,7 @@ function EPE_ChangeState(newState)
 {
     with (EPE)
     {
+        if (!newState) newState = state;
 
         if (newState != 30 && newState != 31) EPE_RemoveSelector();
 
@@ -182,6 +194,7 @@ function EPE_ChangeState(newState)
         {
             if (state == 93) pad.removeEventListener('mousewheel', EPE_ScaleWithWheel, false);
             if (state == 94) pad.removeEventListener('mousewheel', EPE_RotateWithWheel, false);
+
 
             lastState = state;
             state = newState;
@@ -513,7 +526,7 @@ function EPE_Save(bnt)
                     var w = parseInt(p.style.width);
                     var h = parseInt(p.style.height);
 
-                    context.drawImage(p, 0, 0, props_width, props_height, x, y, w, h);
+                    context.drawImage(p, 0, 0, prop_width, prop_height, x, y, w, h);
                     drop.removeChild(p);
                     i--;
                 }
@@ -602,68 +615,70 @@ function EPE_Paste(evt)
     }
 }
 
-var startevt;
 
 
 function EPE_DragStart(evt)
 {
-    startevt = evt;
+    EPE.DragStartEvent = evt;
     evt.dataTransfer.setData("Text", evt.target.id);
 }
 function EPE_Drop(evt)
 {
     evt.preventDefault();
-    var id = evt.dataTransfer.getData("Text");
-    if (id.indexOf("props") == 0)
+    with (EPE)
     {
-        //Add props into canvas
-        var prop = document.getElementById(id);
-
-        var img = new Image();
-        img.id = "selected_" + id;//Set up a new id to identify
-        img.src = prop.src;
-        img.style.position = "absolute";
-
-        img.style.left = evt.layerX + "px";
-        img.style.top = evt.layerY + "px";
-
-        img.title = "Drag to adjust the location.\r\nUse the mouse wheel to adjust size.\r\nDrag to toolbar to remove.";
-        img.draggable = true;
-        img.style.width = props_width + "px";
-        img.style.height = props_height + "px";
-
-        //Register the drag event to move the props on the canvas.
-        img.addEventListener('dragstart', EPE_DragStart, false);
-        //Register the mouse's wheel event to scale the size of props.
-        img.addEventListener('mousewheel', EPE_MouseWheelProp, false);
-
-        drop.appendChild(img);
-
-        blank = false;
-    }
-    else
-    {
-        if (id.indexOf("selected_") == 0)
+        var id = evt.dataTransfer.getData("Text");
+        if (id.indexOf("props") == 0)
         {
-            //move selected props
-            var img = document.getElementById(id);
+            //Add props into canvas
+            var prop = document.getElementById(id);
 
-            var x1 = PageX(startevt);
-            var y1 = PageY(startevt);
-            var x2 = PageX(evt);
-            var y2 = PageY(evt);
-            img.style.left = parseInt(img.style.left) + x2 - x1 + "px";
-            img.style.top = parseInt(img.style.top) + y2 - y1 + "px";
+            var img = new Image();
+            img.id = "selected_" + id;//Set up a new id to identify
+            img.src = prop.src;
+            img.style.position = "absolute";
 
-            //if the props' position is set to the same as the mouse location of the event as follows, 
-            //there will be some delta if the props are not dragged at the most left-top point.
-            //img.style.left = x2 + "px";
-            //img.style.top = y2 + "px";
+            img.style.left = evt.layerX - canvas_border + "px";
+            img.style.top = evt.layerY - canvas_border + "px";
+
+            img.title = "Drag to adjust the location.\r\nUse the mouse wheel to adjust size.\r\nDrag to toolbar to remove.";
+            img.draggable = true;
+            img.style.width = prop_width + "px";
+            img.style.height = prop_height + "px";
+
+            //Register the drag event to move the props on the canvas.
+            img.addEventListener('dragstart', EPE_DragStart, false);
+            //Register the mouse's wheel event to scale the size of props.
+            img.addEventListener('mousewheel', EPE_MouseWheelProp, false);
+
+            drop.appendChild(img);
+
+            blank = false;
         }
         else
         {
-            //Add photo
-            EPE_EditPhoto(document.getElementById(id));
+            if (id.indexOf("selected_") == 0)
+            {
+                //move selected props
+                var img = document.getElementById(id);
+
+                var x1 = PageX(DragStartEvent);
+                var y1 = PageY(DragStartEvent);
+                var x2 = PageX(evt);
+                var y2 = PageY(evt);
+                img.style.left = parseInt(img.style.left) + x2 - x1 + "px";
+                img.style.top = parseInt(img.style.top) + y2 - y1 + "px";
+
+                //if the props' position is set to the same as the mouse location of the event as follows, 
+                //there will be some delta if the props are not dragged at the most left-top point.
+                //img.style.left = x2 + "px";
+                //img.style.top = y2 + "px";
+            }
+            else
+            {
+                //Add photo
+                EPE_EditPhoto(document.getElementById(id));
+            }
         }
     }
 }
@@ -682,6 +697,7 @@ function EPE_AllowDrop(evt)
 //Scaling the props on the canvas with mouse wheel.
 function EPE_MouseWheelProp(evt)
 {
+    //prevent the scrollbar receive this event.
     evt.preventDefault();
 
     var ratio;
@@ -731,7 +747,6 @@ function EPE_StartResize()
         }
         else
         {
-            pad.removeEventListener('mousewheel', EPE_ScaleWithWheel, false);
             EPE_ChangeState(lastState);
         }
     }
@@ -740,6 +755,9 @@ function EPE_StartResize()
 //Scaling the image on the canvas with mouse wheel.
 function EPE_ScaleWithWheel(evt)
 {
+    //prevent the scrollbar receive this event.
+    evt.preventDefault();
+
     var ratio;
     evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
     if (evt.wheelDelta > 0)
@@ -788,7 +806,6 @@ function EPE_StartRotate()
         else
         {
             EPE_ChangeState(lastState);
-            pad.removeEventListener('mousewheel', EPE_RotateWithWheel, false);
         }
     }
 }
@@ -798,6 +815,9 @@ function EPE_RotateWithWheel(evt)
 {
     with (EPE)
     {
+        //prevent the scrollbar receive this event.
+        evt.preventDefault();
+
         //accumulate the rotating radian for rotate the image continuously (after the canvas coordinate restored)
         evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
         if (evt.wheelDelta > 0)
@@ -829,26 +849,6 @@ function EPE_RotateWithWheel(evt)
     }
 }
 
-function EPE_MouseMoveTD(evt)
-{
-    evt.preventDefault();
-    var p = EPE_Pose(evt);
-
-    with (EPE)
-    {
-        td.style.cursor = "auto";
-
-        if (p.x > canvas.width && p.x < (canvas.width + 5))
-        {
-            td.style.cursor = "e-resize";
-        }
-
-        if (p.y > canvas.height && p.y < (canvas.height + 5))
-        {
-            td.style.cursor = "s-resize";
-        }
-    }
-}
 
 function EPE_ButtonOn(bnt, on)
 {
@@ -866,7 +866,14 @@ function EPE_BrightButton(bnt, on)
         if (!bnt.onsrc)
         {
             bnt.offsrc = bnt.src;
-            bnt.onsrc = BrightenImage(bnt.src, false);
+            try
+            {
+                bnt.onsrc = BrightenImage(bnt.src, false);
+            }
+            catch (e)
+            {
+                return;
+            }
         }
 
         if (bnt.on === true) bnt.src = bnt.onsrc;//this button is at current state, it is always on.
@@ -874,7 +881,7 @@ function EPE_BrightButton(bnt, on)
     }
 }
 
-function BrightenImage(data, pen)
+function BrightenImage(data)
 {
     with (EPE)
     {
@@ -883,22 +890,18 @@ function BrightenImage(data, pen)
 
         //put the image on the hidden canvas
         var cc = document.getElementById("cc");
-        var ct = cc.getContext('2d');
+        var ct = cc.getContext("2d");
         cc.width = img.width;
         cc.height = img.height;
         ct.drawImage(img, 0, 0);
 
         //change the color
         var R = 0;
-        var G = 00;
+        var G = 0;
         var B = 255;
 
-        var PENR = parseInt(pencolor.substr(1, 2), 16);
-        var PENG = parseInt(pencolor.substr(3, 2), 16);
-        var PENB = parseInt(pencolor.substr(5, 2), 16);
-
         //Chrome: if you run this APP on local computer, it will report an error: the canvas has been tainted by cross-origin data.
-        var imgdata = ct.getImageData(0, 0, cc.width, cc.height);
+        var imgdata = ct.getImageData(0, 0, img.width, img.height);
         for (var i = 0; i < imgdata.data.length; i += 4)
         {
             var r = imgdata.data[i];
@@ -910,26 +913,138 @@ function BrightenImage(data, pen)
             //if this pixel is visible (not transparent), replace it with specified color.
             if (a != 0)
             {
-                if (pen === true)
-                {
-                    if (imgdata.data[i] != PENR && imgdata.data[i + 1] != PENG && imgdata.data[i + 1] != PENB)
-                    {
-                        imgdata.data[i] = R;
-                        imgdata.data[i + 1] = G;
-                        imgdata.data[i + 2] = B;
-                    }
-                }
-                else
-                {
-                    imgdata.data[i] = R;
-                    imgdata.data[i + 1] = G;
-                    imgdata.data[i + 2] = B;
-                }
+                imgdata.data[i] = R;
+                imgdata.data[i + 1] = G;
+                imgdata.data[i + 2] = B;
             }
         }
 
         //put the processed image back on the canvas, and load it as an image for the button.
         ct.putImageData(imgdata, 0, 0);
         return cc.toDataURL();
+    }
+}
+
+var resizing = null;
+var startevt;
+
+function EPE_MouseMoveResize(evt)
+{
+    if (resizing == null) EPE_Resizing(evt, 2)
+}
+
+function EPE_MouseDownResize(evt)
+{
+    with (EPE)
+    {
+        resizing = EPE_Resizing(evt, 1);
+        if (resizing != null)
+        {
+            startevt = evt;
+            canvas.style.cursor = resizing;
+        }
+    }
+}
+
+function EPE_MouseUpResize(evt)
+{
+    with (EPE)
+    {
+        if (resizing != null)
+        {
+            var p1 = EventPageXY(startevt);
+            var p2 = EventPageXY(evt);
+
+            //the size diff after resizing
+            var dx = 0, dy = 0;
+
+            //the starting position of the image after resizing
+            var x = 0, y = 0;
+
+            var directions = resizing.substr(0, 2);
+            if (directions.indexOf("s") >= 0) dy = p2.y - p1.y;
+            if (directions.indexOf("e") >= 0) dx = p2.x - p1.x;
+            if (directions.indexOf("n") >= 0) y = dy = -(p2.y - p1.y);
+            if (directions.indexOf("w") >= 0) x = dx = -(p2.x - p1.x);
+
+            ResizeCanvasWithData(x, y, canvas.width + dx, canvas.height + dy);
+
+            resizing = null;
+            EPE_Resizing(evt, 3);
+            EPE_ChangeState();
+        }
+    }
+}
+
+function EPE_Resizing(evt, evttype)
+{
+    //don't preventDefault here, otherwise, the drag event of props can't work.
+
+    with (EPE)
+    {
+        var c = PageXY(canvas);
+        var x1 = c.x;
+        var y1 = c.y
+        var x2 = x1 + canvas.width + canvas_border - 1;
+        var y2 = y1 + canvas.height + canvas_border - 1;
+
+        var p = EventPageXY(evt);
+
+        var directions = "";
+
+        if (p.y >= (y1 - canvas_border) && p.y <= (y1 + canvas_border)) directions += "n";//north(top-side)
+        if (p.y >= (y2 - canvas_border) && p.y <= (y2 + canvas_border)) directions += "s";//sourth(bottom-side)
+        if (p.x >= (x1 - canvas_border) && p.x <= (x1 + canvas_border)) directions += "w";//west(left-side)
+        if (p.x >= (x2 - canvas_border) && p.x <= (x2 + canvas_border)) directions += "e";//estern(right-size)
+
+        if (directions.length > 0)
+        {
+            document.body.style.cursor = directions + "-resize";
+            return document.body.style.cursor;
+        }
+        else
+        {
+            document.body.style.cursor = "auto";
+            return null;
+        }
+    }
+}
+
+function ShowAlbum(bnt)
+{
+    if (album_width == 10)
+    {
+        bnt.src = "images/arrowleft.gif";
+        album.style.overflow = "auto";
+        album_width = 120;
+        LayoutResize();
+    }
+    else
+    {
+        bnt.src = "images/arrowright.gif";
+        album.style.overflow = "hidden";
+        album_width = 10;
+        LayoutResize();
+    }
+}
+
+function ShowProps(bnt)
+{
+    with (EPE)
+    {
+        if (props_width == 10)
+        {
+            bnt.src = "images/arrowright.gif";
+            props.style.overflow = "auto";
+            props_width = 120;
+            LayoutResize();
+        }
+        else
+        {
+            bnt.src = "images/arrowleft.gif";
+            props.style.overflow = "hidden";
+            props_width = 10;
+            LayoutResize();
+        }
     }
 }

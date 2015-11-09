@@ -28,13 +28,15 @@ function EPE_MouseDown(evt)
             }
         }
 
-        //picking color
+        //picking color (we can pick up color from canvas only, because we can not get the image data from other place.)
         if (state == 95)
         {
             p = EPE_Pose(evt);
             var imageData = context.getImageData(p.x, p.y, 1, 1);
-            EPE_SetColor(rgbToHex(imageData.data[0], imageData.data[1], imageData.data[2]));
-            EPE_ChangeState(lastState);
+            if (imageData.data[3] > 0)//if this pixel is visible.
+            {
+                EPE_SetColor(rgbToHex(imageData.data[0], imageData.data[1], imageData.data[2]));
+            }
         }
     }
 }
@@ -224,7 +226,7 @@ function EPE_SelectColor(bnt)
                 html.append("</tr>");
                 cols = 1;
             }
-            html.append("<td onclick=\"EPE_SetColor('{0}')\" style=\" background-color: {1}\"></td>".replace("{0}", PenColors[i]).replace("{1}", PenColors[i]));
+            html.append("<td onclick=\"EPE_SetColor('{0}',true)\" style=\" background-color: {1}\"></td>".replace("{0}", PenColors[i]).replace("{1}", PenColors[i]));
             cols++;
         }
 
@@ -233,7 +235,7 @@ function EPE_SelectColor(bnt)
         colorTable = Popup(colorTable, bnt, html.toString());
     }
 }
-function EPE_SetColor(color)
+function EPE_SetColor(color, fromPalette)
 {
     with (EPE)
     {
@@ -245,11 +247,11 @@ function EPE_SetColor(color)
             //set the color to the pen button on the toolbar
             //use a hidden canvas to process image            
             var img = new Image();
-            img.src = "images/pen.png";//the original image for pen button.
+            img.src = "./images/pen.png";//the original image for pen button.
 
             //put the image on the hidden canvas
             var cc = document.getElementById("cc");
-            var ct = cc.getContext('2d');
+            var ct = cc.getContext("2d");
             cc.width = img.width;
             cc.height = img.height;
             ct.drawImage(img, 0, 0);
@@ -259,39 +261,79 @@ function EPE_SetColor(color)
             var G = parseInt(pencolor.substr(3, 2), 16);
             var B = parseInt(pencolor.substr(5, 2), 16);
 
+            var offimgdata;//the button image while mouseout or not pressed.
+            var onimgdata;//the button image while mouseon or pressed.
+
             //Chrome: if you run this APP on local computer, it will report an error: the canvas has been tainted by cross-origin data.
-            var imgdata = ct.getImageData(0, 0, cc.width, cc.height);
-            for (var i = 0; i < imgdata.data.length; i += 4)
+            try
             {
-                var r = imgdata.data[i];
-                var g = imgdata.data[i + 1];
-                var b = imgdata.data[i + 2];
-                var a = imgdata.data[i + 3];
+                offimgdata = ct.getImageData(0, 0, cc.width, cc.height);
+                onimgdata = ct.createImageData(cc.width, cc.height)
 
-                //for black-and-white transparent image, just like the pen.png in this APP.
-                //if this pixel is visible (not transparent), replace it with specified color.
-                //if (a != 0)
-                //{
-                //    imgdata.data[i] = R;
-                //    imgdata.data[i + 1] = G;
-                //    imgdata.data[i + 2] = B;
-                //}  
-                //for this special pen.png, replace original pixel with RED color with specified color.
-                if (imgdata.data[i] > 0 && imgdata.data[i + 1] == 0 && imgdata.data[i + 2] == 0)
+
+                for (var i = 0; i < offimgdata.data.length; i += 4)
                 {
-                    imgdata.data[i] = R;
-                    imgdata.data[i + 1] = G;
-                    imgdata.data[i + 2] = B;
-                }
-            }
+                    var r = offimgdata.data[i];
+                    var g = offimgdata.data[i + 1];
+                    var b = offimgdata.data[i + 2];
+                    var a = offimgdata.data[i + 3];
 
-            //put the processed image back on the canvas, and load it as an image for the button.
-            ct.putImageData(imgdata, 0, 0);
-            bpen.offsrc = cc.toDataURL();
-            bpen.onsrc = BrightenImage(bpen.offsrc, true);
+                    //for black-and-white transparent image, just like the pen.png in this APP.
+                    //if this pixel is visible (not transparent), replace it with specified color.
+                    //if (a != 0)
+                    //{
+                    //    imgdata.data[i] = R;
+                    //    imgdata.data[i + 1] = G;
+                    //    imgdata.data[i + 2] = B;
+                    //}  
+
+                    //for this special pen.png, replace original pixel with RED color with specified pen color.
+                    if (r > 0 && g == 0 && b == 0)
+                    {
+                        offimgdata.data[i] = R;
+                        offimgdata.data[i + 1] = G;
+                        offimgdata.data[i + 2] = B;
+
+                        onimgdata.data[i] = R;
+                        onimgdata.data[i + 1] = G;
+                        onimgdata.data[i + 2] = B;
+                        onimgdata.data[i + 3] = a;
+                    }
+                    else
+                    {
+                        //for original visible pixels, replace them with brighter color.
+                        if (a > 0)
+                        {
+                            onimgdata.data[i] = 0;
+                            onimgdata.data[i + 1] = 0;
+                            onimgdata.data[i + 2] = 255;
+                            onimgdata.data[i + 3] = a;
+                        }
+                        else
+                        {
+                            onimgdata.data[i] = r;
+                            onimgdata.data[i + 1] = g;
+                            onimgdata.data[i + 2] = b;
+                            onimgdata.data[i + 3] = a;
+                        }
+                    }
+                }
+
+
+                //put the processed image back on the canvas, and load it as an image for the button.
+                ct.putImageData(offimgdata, 0, 0);
+                bpen.offsrc = cc.toDataURL();
+
+                ct.putImageData(onimgdata, 0, 0);
+                bpen.onsrc = cc.toDataURL();
+            }
+            catch (e)
+            {
+            }
         }
 
-        EPE_ChangeState(lastState);
+        if (fromPalette === true) EPE_ChangeState(lastState);
+        else EPE_ChangeState(state);
     }
 }
 function EPE_PenSize(bnt)
@@ -347,6 +389,7 @@ function EPE_PickColor(bnt)
         EPE_ChangeState(95);
     }
 }
+
 //set the pen style of the canvas
 function EPE_SetDrawing()
 {

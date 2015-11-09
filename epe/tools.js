@@ -53,38 +53,33 @@ StringBuilder.prototype.join = function (sep)
     return this.stringArray.join(sep);
 };
 
-//get absolute position
-function getCoordinates(c)
+//get coordinates releated to page of any element (for all browser)
+function PageXY(c)
 {
-    var coordinates = { x: 0, y: 0 };
-    while (c)
+    var x = 0;
+    var y = 0;
+
+    var p = c;
+    while (p)
     {
-        try
-        {
-            coordinates.x += c.offsetLeft;
-            coordinates.y += c.offsetTop;
-            c = c.offsetParent;
-        }
-        catch (e)
-        {
-            break;
-        }
+        x += p.offsetLeft;
+        y += p.offsetTop;
+        p = p.offsetParent;
     }
-    return coordinates;
-}
-//get scroll position
-function getScrollPose(c)
-{
-    var pose = { x: 0, y: 0 };
-    while (c)
+
+    p = c;
+    while (p)
     {
-        if (c.tagName.toUpperCase() == "BODY") break;
-        pose.x += c.scrollLeft;
-        pose.y += c.scrollTop;
-        c = c.parentElement;
+        if (p.tagName.toUpperCase() == "BODY") break;
+        x -= p.scrollLeft;
+        y -= p.scrollTop;
+        p = p.parentElement;
     }
-    return pose;
+
+
+    return { x: x, y: y };
 }
+
 
 var zIndexShowPopup = 999;
 function Popup(div, cfire, html)
@@ -94,10 +89,10 @@ function Popup(div, cfire, html)
 
     if (cfire != null)
     {
-        var c = getCoordinates(cfire);
-        var s = getScrollPose(cfire);
-        x = c.x - s.x;
-        y = c.y - s.y + cfire.clientHeight;
+        var c = PageXY(cfire);
+
+        x = c.x;
+        y = c.y + cfire.clientHeight;
     }
 
     if (html)
@@ -108,7 +103,7 @@ function Popup(div, cfire, html)
             document.body.appendChild(div);
             div.style.position = "absolute";
             div.style.zIndex = zIndexShowPopup;
-            zIndexShowPopup = zIndexShowPopup + 1;
+            zIndexShowPopup++;
         }
 
         div.innerHTML = html;
@@ -125,7 +120,7 @@ function Popup(div, cfire, html)
 }
 
 
-//Get browser's type
+//Get browser's type and version
 function BrowserInfo()
 {
     var userAgent = navigator.userAgent;
@@ -253,6 +248,12 @@ function rgbToHex(r, g, b)
     return "#" + ((r << 16) | (g << 8) | b).toString(16);
 }
 
+//get the location related to page when the mouse event occurs.
+//support all browser
+function EventPageXY(evt)
+{
+    return { x: PageX(evt), y: PageY(evt) };
+}
 //Get the event's pageX for all browser (from JQuery)
 function PageX(evt)
 {
@@ -268,7 +269,7 @@ function PageX(evt)
 //Get the event's pageY for all browser (from JQuery)
 function PageY(evt)
 {
-    if (evt.pageX == null && evt.clientX != null)
+    if (evt.pageY == null && evt.clientY != null)
     {
         var doc = document.documentElement, body = document.body;
         evt.pageY = evt.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) - (doc && doc.clientTop || body && body.clientTop || 0);

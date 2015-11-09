@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Emily Photo Editor For Web (EPE 0.1)</title>
+    <title>Emily Photo Editor For Web (EPE 2.0)</title>
     <script type="text/ecmascript" src="layout.js"></script>
     <script type="text/ecmascript" src="epe.js"></script>
     <script type="text/ecmascript" src="draw.js"></script>
@@ -25,7 +25,7 @@
                         </td>
                         <td id="editor">
                             <img src="images/open.png" onclick="EPE_Load(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Open your photos" />
-                            <img id="bpen" src="images/pen.png" onclick="EPE_Pen(this)" onmouseover="EPE_BrightButton(this,true,true)" onmouseout="EPE_BrightButton(this,false,true)" title="Start to draw" />
+                            <img id="bpen" src="images/pen.png" onclick="EPE_Pen(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Start to draw" />
                             <img id="beraser" src="images/eraser.png" onclick="EPE_Eraser(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Start to erase" />
                             <img id="bselect" src="images/select.png" onclick="EPE_Select(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Select a block" />
                             <img id="bresize" src="images/resize.png" onclick="EPE_StartResize()" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Resize the canvas with mouse wheel..." />
@@ -67,7 +67,7 @@
         </tr>
         <tr id="main">
             <td>
-                <div id="album" title="Album: click the Open button on the toolbar to load the phontos from your device."></div>
+                <div id="album" title="Album: click the Open button on the toolbar to load the phontos from your device."><div style="text-align:right;"><img src="images/arrowleft.gif" onclick="ShowAlbum(this)" title="Close or display" /></div></div>
             </td>
             <td id="td">
                 <div id="pad">
@@ -77,14 +77,14 @@
                 </div>
             </td>
             <td>
-                <div id="props" title="Props: select a property and drag to the canvas to decorate your photo."></div>
+                <div id="props" title="Props: select a property and drag to the canvas to decorate your photo."><div style="text-align:left;"><img src="images/arrowright.gif" onclick="ShowProps(this)" title="Close or display" /></div></div>
             </td>
         </tr>
         <tr id="footbar" class="Footbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
             <td colspan="3" style="text-align: left; vertical-align: middle; white-space: nowrap;">
                 <table style="width: 100%">
                     <tr>
-                        <td><span id="status"></span></td>
+                        <td style="width:200px"><span id="status"></span></td>
                         <td style="text-align: center"><span style="padding-left: 50px;">HTML APP</span>
                             <span style="padding-left: 50px;">HTML5+JavaScript</span>
                             <span style="padding-left: 50px;"><a href="http://github.com/emily1997" target="_blank">

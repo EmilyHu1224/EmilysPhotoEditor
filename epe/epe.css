@@ -92,13 +92,9 @@ body
     overflow: auto;
     text-align: center;
     vertical-align: top;
-    background-color: #FFCC99;
+    background-color: #aad7ff;
 }
 
-#td
-{
-   
-}
 
 #pad
 {
@@ -114,6 +110,7 @@ body
     vertical-align: middle;
     position: relative;
     background-color: #eeeeee;
+    border: 0px solid #aad7ff;
 }
 
 #c
@@ -124,7 +121,6 @@ body
 
 #props
 {
-    width: 120px;
     text-align: center;
     vertical-align: top;
     overflow: auto;
@@ -187,3 +183,5 @@ body
     font-size: 9pt;
     text-align: center;
 }
+
+

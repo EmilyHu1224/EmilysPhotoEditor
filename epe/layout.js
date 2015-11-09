@@ -8,35 +8,40 @@
  * size and resize the canvas and it's container.
  */
 
+//the margin of middle parts (don't set any margin in the css!)
+var canvas_margin = 10;
+
+//the border size of canvas (canvas holder)
+var canvas_border = 3;
+
+var album_width = 120;
+var props_width =120;
+
 function LayoutResize()
 {
-    //the margin of middle parts
-    var margin = 10;
-
     var header = document.getElementById("toolbar");
     var left = document.getElementById("album");
     var main = document.getElementById("pad");
     var right = document.getElementById("props");
     var footer = document.getElementById("footbar");
 
-    left.style.marginTop = margin + "px";
-    left.style.marginBottom = margin + "px";
-    left.style.marginLeft = margin + "px";
-    left.style.marginRight= margin + "px";
+    left.style.width = album_width + "px";
+    right.style.width = props_width + "px";
 
-    main.style.marginTop = margin + "px";
-    main.style.marginBottom = margin + "px";
+    //left.style.margin = canvas_margin + "px";
+    main.style.margin = canvas_margin + "px";
+    main.style.margin = canvas_margin + "px";
+    //right.style.margin = canvas_margin + "px";
 
-    right.style.marginTop = margin + "px";
-    right.style.marginBottom = margin + "px";
-    right.style.marginLeft = margin + "px";
-    right.style.marginRight = margin + "px";
+    drop = document.getElementById("drop");
+    drop.style.borderWidth = canvas_border + "px";
+
 
     var hBody = document.documentElement.clientHeight;
     var wBody = document.documentElement.clientWidth;
 
-    var hMain = hBody - GetEleHeight(header) - GetEleHeight(footer) - 2 * (margin ) + "px";
-    var wMain = wBody - GetEleWidth(left) - GetEleWidth(right) - 4 * (margin ) + "px";
+    var hMain = hBody - GetEleHeight(header) - GetEleHeight(footer) - 2 * (canvas_margin) + "px";
+    var wMain = wBody - GetEleWidth(left) - GetEleWidth(right) - 2 * (canvas_margin) + "px";
 
     left.style.height = hMain;
     right.style.height = hMain;
@@ -65,11 +70,12 @@ function SizeCanvas()
 {
     with (EPE)
     {
-       //Resize the Canvas (because it does not support style)
-        drop.style.width = pad.style.width;
-        drop.style.height = pad.style.height;
-        canvas.width = pad.clientWidth - 0;
-        canvas.height = pad.clientHeight - 0;
+        //Resize the Canvas (because it does not support style)
+        var w = parseInt(pad.style.width) - canvas_border * 2;
+        var h = parseInt(pad.style.height) - canvas_border * 2;
+
+        ResizeCanvas(w, h);
+
 
         EPE_SetDrawing();
     }
@@ -86,6 +92,19 @@ function ResizeCanvas(width, height)
 
         canvas.width = width;
         canvas.height = height;
+    }
+}
+
+function ResizeCanvasWithData(x, y, width, height)
+{
+    with (EPE)
+    {
+        var img = new Image();
+        img.src = canvas.toDataURL();
+
+        ResizeCanvas(width, height);
+
+        context.drawImage(img, x, y);
     }
 }
 
