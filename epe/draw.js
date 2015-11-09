@@ -41,59 +41,57 @@ function EPE_MouseDown(evt)
 function EPE_MouseMove(evt)
 {
     evt.preventDefault();
+    var p = EPE_Pose(evt);
 
     with (EPE)
     {
-        if (state == 11)//Drawing
+        switch (state)
         {
-            var p = EPE_Pose(evt);
+            case 11://Drawing
+                if (LastPose != null)
+                {
+                    context.beginPath();
+                    context.moveTo(LastPose.x, LastPose.y);
+                    context.lineTo(p.x, p.y);
+                    context.stroke();
+                }
 
-            if (LastPose != null)
-            {
-                context.beginPath();
-                context.moveTo(LastPose.x, LastPose.y);
-                context.lineTo(p.x, p.y);
-                context.stroke();
-            }
+                LastPose = p;
 
-            LastPose = p;
+                blank = false;
+                break;
 
-            blank = false;
-        }
-        if (state == 21)//Erasing
-        {
-            var p = EPE_Pose(evt);
-            context.clearRect(p.x, p.y, 10, 10);
-        }
+            case 21://Erasing
+                context.clearRect(p.x, p.y, 10, 10);
+                break;
 
-        if (state == 31)//Selecting
-        {
-            var p = EPE_Pose(evt);
+            case 31://Selecting
+                if (SelectedArea == null)
+                {
+                    //use a div's red border to indicate the selected area.
+                    SelectedArea = document.createElement("div");
+                    SelectedArea.className = "SelectedArea";
+                    SelectedArea.style.position = "absolute";
+                    //if the mouse move into the selected area, the canvas can not capture the event, so remove the selected area to re-select.
+                    SelectedArea.addEventListener('mousedown', EPE_RemoveSelector, false);
+                    drop.appendChild(SelectedArea);
+                    EPE_ShowInfo("Press mouse key and drag a rectangle...");
+                }
+                var x1 = LastPose.x;
+                var x2 = p.x;
+                var y1 = LastPose.y;
+                var y2 = p.y;
+                if (x1 > x2) { var t = x2; x2 = x1; x1 = t; }
+                if (y1 > y2) { var t = y2; y2 = y1; y1 = t; }
+                //make sure your mouse is out of the range of SelectedArea, so the mouseout will not happen.
+                x1++; y1++;
+                x2--; y2--;
 
-            if (SelectedArea == null)
-            {
-                SelectedArea = document.createElement("div");
-                SelectedArea.className = "SelectedArea";
-                SelectedArea.style.position = "absolute";
-                //if the mouse move into the selected area, the canvas can not capture the event, so remove the selected area to re-select.
-                SelectedArea.addEventListener('mousedown', EPE_RemoveSelector, false);
-                drop.appendChild(SelectedArea);
-                EPE_ShowInfo("Press mouse key and drag a rectangle...");
-            }
-            var x1 = LastPose.x;
-            var x2 = p.x;
-            var y1 = LastPose.y;
-            var y2 = p.y;
-            if (x1 > x2) { var t = x2; x2 = x1; x1 = t; }
-            if (y1 > y2) { var t = y2; y2 = y1; y1 = t; }
-            //make sure your mouse is out of the range of SelectedArea, so the mouseout will not happen.
-            x1++; y1++;
-            x2--; y2--;
-
-            SelectedArea.style.left = x1 + "px";
-            SelectedArea.style.top = y1 + "px";
-            SelectedArea.style.width = x2 - x1 - 1 + "px";
-            SelectedArea.style.height = y2 - y1 - 1 + "px";
+                SelectedArea.style.left = x1 + "px";
+                SelectedArea.style.top = y1 + "px";
+                SelectedArea.style.width = x2 - x1 - 1 + "px";
+                SelectedArea.style.height = y2 - y1 - 1 + "px";
+                break;
         }
     }
 }
@@ -289,7 +287,8 @@ function EPE_SetColor(color)
 
             //put the processed image back on the canvas, and load it as an image for the button.
             ct.putImageData(imgdata, 0, 0);
-            bpen.src = cc.toDataURL();           
+            bpen.offsrc = cc.toDataURL();
+            bpen.onsrc = BrightenImage(bpen.offsrc, true);
         }
 
         EPE_ChangeState(lastState);

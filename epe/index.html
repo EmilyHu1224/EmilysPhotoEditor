@@ -11,7 +11,7 @@
     <link rel="stylesheet" type="text/css" href="epe.css" />
 
 </head>
-<body onload="EPE_Init('c',  10, '#000080')">
+<body onload="EPE_Init('c',  10, '#FF0000')">
     <table cellpadding="0" cellspacing="0">
         <tr id="toolbar" class="Toolbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
             <td colspan="3">
@@ -24,23 +24,23 @@
                                 <img src="images/title.png" style="width: 400px; height: 50px; padding-right: 10px" /></span>
                         </td>
                         <td id="editor">
-                            <img src="images/open.png" onclick="EPE_Load(this)" title="Open your photos" />
-                            <img id="bpen" src="images/pen.png" onclick="EPE_Pen(this)" title="Start to draw" />
-                            <img id="beraser" src="images/eraser.png" onclick="EPE_Eraser(this)" title="Start to erase" />
-                            <img id="bselect" src="images/select.png" onclick="EPE_Select(this)" title="Select a block" />
-                            <img id="bresize" src="images/resize.png" onclick="EPE_StartResize()" title="Resize the canvas with mouse wheel..." />
-                            <img id="brotate" src="images/rotate.png" onclick="EPE_StartRotate()" title="Rotate the photo with mouse wheel..." />
-                            <img id="bcolor" src="images/pencolor.png" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
-                            <img id="bpickcolor" src="images/pickcolor.png" onclick="EPE_PickColor(this)" title="Pick a color from canvas" />
-                            <img id="bsize" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
-                            <img id="bflip" src="images/flip.png" onclick="EPE_Process(8)" title="Flip the photo" />
-                            <img id="bscaleup" src="images/scaleup.png" onclick="EPE_Scale(2)" title="Scale 100%" />
-                            <img id="bscaledown" src="images/scaledown.png" onclick="EPE_Scale(0.5)" title="Scale 50%" />
-                            <img id="bprocessing" src="images/processing.png" onclick="EPE_OpenProcessor()" title="Processing the photo..." />
-                            <img id="bclear" src="images/clear.png" onclick="EPE_Clear(this)" title="Clear the photo" />
-                            <img id="bsave" src="images/save.png" onclick="EPE_Save(this)" title="Save to the album" />
-                            <img src="images/paste.png" onclick="EPE_Paste(this)" title="Paste a photo from other site" />
-                            <img src="images/facebook.png" onclick="EPE_FB(this)" title="Share your photo to facebook" />
+                            <img src="images/open.png" onclick="EPE_Load(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Open your photos" />
+                            <img id="bpen" src="images/pen.png" onclick="EPE_Pen(this)" onmouseover="EPE_BrightButton(this,true,true)" onmouseout="EPE_BrightButton(this,false,true)" title="Start to draw" />
+                            <img id="beraser" src="images/eraser.png" onclick="EPE_Eraser(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Start to erase" />
+                            <img id="bselect" src="images/select.png" onclick="EPE_Select(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Select a block" />
+                            <img id="bresize" src="images/resize.png" onclick="EPE_StartResize()" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Resize the canvas with mouse wheel..." />
+                            <img id="brotate" src="images/rotate.png" onclick="EPE_StartRotate()" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Rotate the photo with mouse wheel..." />
+                            <img id="bcolor" src="images/pencolor.png" onclick="EPE_SelectColor(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Select the color of pen" />
+                            <img id="bpickcolor" src="images/pickcolor.png" onclick="EPE_PickColor(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Pick a color from canvas" />
+                            <img id="bsize" src="images/pensize.png" onclick="EPE_PenSize(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Select size of pen" />
+                            <img id="bflip" src="images/flip.png" onclick="EPE_Process(8)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Flip the photo" />
+                            <img id="bscaleup" src="images/scaleup.png" onclick="EPE_Scale(2)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Scale 100%" />
+                            <img id="bscaledown" src="images/scaledown.png" onclick="EPE_Scale(0.5)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Scale 50%" />
+                            <img id="bprocessing" src="images/processing.png" onclick="EPE_OpenProcessor()" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Processing the photo..." />
+                            <img id="bclear" src="images/clear.png" onclick="EPE_Clear(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Clear the photo" />
+                            <img id="bsave" src="images/save.png" onclick="EPE_Save(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Save to the album" />
+                            <img src="images/paste.png" onclick="EPE_Paste(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Paste a photo from other site" />
+                            <img src="images/facebook.png" onclick="EPE_FB(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Share your photo to facebook" />
                         </td>
                         <td id="processor" style="display: none">
                             <img src="images/invert.png" onclick="EPE_Process(1)" title="Invert" />
@@ -69,7 +69,7 @@
             <td>
                 <div id="album" title="Album: click the Open button on the toolbar to load the phontos from your device."></div>
             </td>
-            <td>
+            <td id="td">
                 <div id="pad">
                     <div id="drop" dropzone="link" ondrop="EPE_Drop(event)" ondragover="EPE_AllowDrop(event)" title="Canvas: Drag your photo here to edit it.">
                         <canvas id="c">Sorry! Your browser does not support HTML5.</canvas>

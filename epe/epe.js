@@ -56,8 +56,9 @@ function EPE_Init(id, pensize, pencolor)
     EPE.worker = null;//processing worker.
     EPE.working = false;
     EPE.blank = true;//whether the canvas is blank (no image)
-    EPE.rotating_img=null;
+    EPE.rotating_img = null;
     EPE.rotating_radian = 0;
+
 
     //toolbar and the 3 panels on it
     EPE.toolbar = document.getElementById("toolbar");
@@ -79,6 +80,7 @@ function EPE_Init(id, pensize, pencolor)
 
     //elements on main area
     EPE.album = document.getElementById("album");
+    EPE.td = document.getElementById("td");
     EPE.pad = document.getElementById("pad");
     EPE.drop = document.getElementById("drop");
     EPE.canvas = document.getElementById(id);
@@ -118,6 +120,9 @@ function EPE_Init(id, pensize, pencolor)
             canvas.addEventListener('touchmove', EPE_MouseMove, false);
             canvas.addEventListener('touchend', EPE_MouseUp, false);
 
+
+            td = document.getElementById("td");
+            td.addEventListener('mousemove', EPE_MouseMoveTD, false);
 
             document.body.addEventListener('paste', EPE_Paste, false);
 
@@ -184,12 +189,19 @@ function EPE_ChangeState(newState)
         }
 
         //buttons on editor panel
-        SetClass(bpen, "pressed", state == 10 || state == 11);
-        SetClass(beraser, "pressed", state == 20 || state == 21);
-        SetClass(bselect, "pressed", state == 30 || state == 31);
-        SetClass(bresize, "pressed", state == 93);
-        SetClass(brotate, "pressed", state == 94);
-        SetClass(bpickcolor, "pressed", state == 95);
+        //SetClass(bpen, "pressed", state == 10 || state == 11);
+        //SetClass(beraser, "pressed", state == 20 || state == 21);
+        //SetClass(bselect, "pressed", state == 30 || state == 31);
+        //SetClass(bresize, "pressed", state == 93);
+        //SetClass(brotate, "pressed", state == 94);
+        //SetClass(bpickcolor, "pressed", state == 95);
+
+        EPE_ButtonOn(bpen, state == 10 || state == 11);
+        EPE_ButtonOn(beraser, state == 20 || state == 21);
+        EPE_ButtonOn(bselect, state == 30 || state == 31);
+        EPE_ButtonOn(bresize, state == 93);
+        EPE_ButtonOn(brotate, state == 94);
+        EPE_ButtonOn(bpickcolor, state == 95);
 
         bclear.title = (state == 30 || state == 31) ? "Clear the selected area" : "Clear the entire image";
         bsave.title = (state == 30 || state == 31) ? "Save the selected area image to the album" : "Save the entire image to the album";
@@ -770,7 +782,7 @@ function EPE_StartRotate()
                 rotating_radian = 0;
 
                 //center the image on conter of the canvas for rotating.
-                context.drawImage(rotating_img, (size - rotating_img.width) / 2, (size-rotating_img.height) / 2);
+                context.drawImage(rotating_img, (size - rotating_img.width) / 2, (size - rotating_img.height) / 2);
             }
         }
         else
@@ -817,5 +829,107 @@ function EPE_RotateWithWheel(evt)
     }
 }
 
+function EPE_MouseMoveTD(evt)
+{
+    evt.preventDefault();
+    var p = EPE_Pose(evt);
 
+    with (EPE)
+    {
+        td.style.cursor = "auto";
 
+        if (p.x > canvas.width && p.x < (canvas.width + 5))
+        {
+            td.style.cursor = "e-resize";
+        }
+
+        if (p.y > canvas.height && p.y < (canvas.height + 5))
+        {
+            td.style.cursor = "s-resize";
+        }
+    }
+}
+
+function EPE_ButtonOn(bnt, on)
+{
+    with (EPE)
+    {
+        bnt.on = on;
+        EPE_BrightButton(bnt, on);
+    }
+}
+function EPE_BrightButton(bnt, on)
+{
+    with (EPE)
+    {
+        //create an image for mouse on
+        if (!bnt.onsrc)
+        {
+            bnt.offsrc = bnt.src;
+            bnt.onsrc = BrightenImage(bnt.src, false);
+        }
+
+        if (bnt.on === true) bnt.src = bnt.onsrc;//this button is at current state, it is always on.
+        else bnt.src = on ? bnt.onsrc : bnt.offsrc;
+    }
+}
+
+function BrightenImage(data, pen)
+{
+    with (EPE)
+    {
+        var img = new Image();
+        img.src = data;
+
+        //put the image on the hidden canvas
+        var cc = document.getElementById("cc");
+        var ct = cc.getContext('2d');
+        cc.width = img.width;
+        cc.height = img.height;
+        ct.drawImage(img, 0, 0);
+
+        //change the color
+        var R = 0;
+        var G = 00;
+        var B = 255;
+
+        var PENR = parseInt(pencolor.substr(1, 2), 16);
+        var PENG = parseInt(pencolor.substr(3, 2), 16);
+        var PENB = parseInt(pencolor.substr(5, 2), 16);
+
+        //Chrome: if you run this APP on local computer, it will report an error: the canvas has been tainted by cross-origin data.
+        var imgdata = ct.getImageData(0, 0, cc.width, cc.height);
+        for (var i = 0; i < imgdata.data.length; i += 4)
+        {
+            var r = imgdata.data[i];
+            var g = imgdata.data[i + 1];
+            var b = imgdata.data[i + 2];
+            var a = imgdata.data[i + 3];
+
+            //for black-and-white transparent image, just like the pen.png in this APP.
+            //if this pixel is visible (not transparent), replace it with specified color.
+            if (a != 0)
+            {
+                if (pen === true)
+                {
+                    if (imgdata.data[i] != PENR && imgdata.data[i + 1] != PENG && imgdata.data[i + 1] != PENB)
+                    {
+                        imgdata.data[i] = R;
+                        imgdata.data[i + 1] = G;
+                        imgdata.data[i + 2] = B;
+                    }
+                }
+                else
+                {
+                    imgdata.data[i] = R;
+                    imgdata.data[i + 1] = G;
+                    imgdata.data[i + 2] = B;
+                }
+            }
+        }
+
+        //put the processed image back on the canvas, and load it as an image for the button.
+        ct.putImageData(imgdata, 0, 0);
+        return cc.toDataURL();
+    }
+}

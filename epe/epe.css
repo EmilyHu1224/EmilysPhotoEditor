@@ -27,10 +27,11 @@ body
     text-align: center;
     background-color: #eeeeee;
 }
+
 #status
 {
-    color:red;
-    padding-left:10px;   
+    color: red;
+    padding-left: 10px;
 }
 
 #editor
@@ -76,7 +77,7 @@ body
 
 .pressed
 {
-    background-color: #CCCCCC;    
+    background-color: #CCCCCC;
 }
 
 #main
@@ -92,6 +93,11 @@ body
     text-align: center;
     vertical-align: top;
     background-color: #FFCC99;
+}
+
+#td
+{
+   
 }
 
 #pad
