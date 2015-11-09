@@ -15,17 +15,26 @@ function EPE_MouseDown(evt)
     evt.preventDefault();
     with (EPE)
     {
-        if (flag == 10 || flag == 20 || flag == 30)
+        if (state == 10 || state == 20 || state == 30)
         {
             //Start drawing, earsing, selecting
-            EPE_SetFlag(flag + 1);
+            EPE_ChangeState(state + 1);
 
             LastPose = EPE_Pose(evt);
 
-            if (flag == 31)
+            if (state == 31)
             {
                 EPE_RemoveSelector();
             }
+        }
+
+        //picking color
+        if (state == 95)
+        {
+            p = EPE_Pose(evt);
+            var imageData = context.getImageData(p.x, p.y, 1, 1);
+            EPE_SetColor(rgbToHex(imageData.data[0], imageData.data[1], imageData.data[2]));
+            EPE_ChangeState(lastState);
         }
     }
 }
@@ -35,7 +44,7 @@ function EPE_MouseMove(evt)
 
     with (EPE)
     {
-        if (flag == 11)//Drawing
+        if (state == 11)//Drawing
         {
             var p = EPE_Pose(evt);
 
@@ -51,13 +60,13 @@ function EPE_MouseMove(evt)
 
             blank = false;
         }
-        if (flag == 21)//Erasing
+        if (state == 21)//Erasing
         {
             var p = EPE_Pose(evt);
             context.clearRect(p.x, p.y, 10, 10);
         }
 
-        if (flag == 31)//Selecting
+        if (state == 31)//Selecting
         {
             var p = EPE_Pose(evt);
 
@@ -95,8 +104,8 @@ function EPE_MouseUp(evt)
     with (EPE)
     {
         //Stop drawing, erasing, selecting
-        if (flag == 11 || flag == 21 || flag == 31) EPE_SetFlag(flag - 1);;
-        if (flag == 30) EPE_ExitIO();
+        if (state == 11 || state == 21 || state == 31) EPE_ChangeState(state - 1);;
+        if (state == 30) EPE_ExitIO();
     }
 }
 function EPE_MouseOut(evt)
@@ -104,8 +113,8 @@ function EPE_MouseOut(evt)
     with (EPE)
     {
         //Stop drawing, erasing, selecting
-        if (flag == 11 || flag == 21 || flag == 31) EPE_SetFlag(flag - 1);
-        if (flag == 30) EPE_ExitIO();
+        if (state == 11 || state == 21 || state == 31) EPE_ChangeState(state - 1);
+        if (state == 30) EPE_ExitIO();
     }
 }
 
@@ -145,14 +154,14 @@ function EPE_Pen(bnt)
 {
     with (EPE)
     {
-        EPE_SetFlag(10);//Enable pen
+        EPE_ChangeState(10);//Enable pen
     }
 }
 function EPE_Eraser(bnt)
 {
     with (EPE)
     {
-        EPE_SetFlag(20);//Enable earser
+        EPE_ChangeState(20);//Enable earser
     }
 }
 
@@ -160,11 +169,18 @@ function EPE_Select(bnt)
 {
     with (EPE)
     {
-        EPE_SetFlag(30);//Enable selector
+        if (EPE_HasData() == false)
+        {
+            EPE_ShowInfo("There is nothing on the canvas.");
+        }
+        else
+        {
+            EPE_ChangeState(30);//Enable selector
 
-        EPE_RemoveSelector();
+            EPE_RemoveSelector();
 
-        EPE_ShowInfo("Press mouse key and drag a rectangle...");
+            EPE_ShowInfo("Press mouse key and drag a rectangle...");
+        }
     }
 }
 
@@ -188,7 +204,7 @@ function EPE_SelectColor(bnt)
         {
             if (colorTable.style.display != "none")
             {
-                EPE_SetFlag(91);
+                EPE_ChangeState(91);
                 colorTable.style.display = "none";
                 return;
             }
@@ -210,28 +226,73 @@ function EPE_SelectColor(bnt)
                 html.append("</tr>");
                 cols = 1;
             }
-            html.append("<td onclick=\"EPE_SetColor(this)\" style=\" background-color: " + PenColors[i] + "\"></td>");
+            html.append("<td onclick=\"EPE_SetColor('{0}')\" style=\" background-color: {1}\"></td>".replace("{0}", PenColors[i]).replace("{1}", PenColors[i]));
             cols++;
         }
 
         html.append("</tr></table>");
-        EPE_SetFlag(91);
+        EPE_ChangeState(91);
         colorTable = Popup(colorTable, bnt, html.toString());
     }
 }
-function EPE_SetColor(td)
+function EPE_SetColor(color)
 {
     with (EPE)
     {
-        if (td)
+        if (color)
         {
-            var color = td.style.backgroundColor;
             pencolor = color;
             context.strokeStyle = color;
-            //bcolor.style.backgroundColor = color;
+
+            //set the color to the pen button on the toolbar
+            //use a hidden canvas to process image            
+            var img = new Image();
+            img.src = "images/pen.png";//the original image for pen button.
+
+            //put the image on the hidden canvas
+            var cc = document.getElementById("cc");
+            var ct = cc.getContext('2d');
+            cc.width = img.width;
+            cc.height = img.height;
+            ct.drawImage(img, 0, 0);
+
+            //change the color
+            var R = parseInt(pencolor.substr(1, 2), 16);
+            var G = parseInt(pencolor.substr(3, 2), 16);
+            var B = parseInt(pencolor.substr(5, 2), 16);
+
+            //Chrome: if you run this APP on local computer, it will report an error: the canvas has been tainted by cross-origin data.
+            var imgdata = ct.getImageData(0, 0, cc.width, cc.height);
+            for (var i = 0; i < imgdata.data.length; i += 4)
+            {
+                var r = imgdata.data[i];
+                var g = imgdata.data[i + 1];
+                var b = imgdata.data[i + 2];
+                var a = imgdata.data[i + 3];
+
+                //for black-and-white transparent image, just like the pen.png in this APP.
+                //if this pixel is visible (not transparent), replace it with specified color.
+                //if (a != 0)
+                //{
+                //    imgdata.data[i] = R;
+                //    imgdata.data[i + 1] = G;
+                //    imgdata.data[i + 2] = B;
+                //}  
+                //for this special pen.png, replace original pixel with RED color with specified color.
+                if (imgdata.data[i] > 0 && imgdata.data[i + 1] == 0 && imgdata.data[i + 2] == 0)
+                {
+                    imgdata.data[i] = R;
+                    imgdata.data[i + 1] = G;
+                    imgdata.data[i + 2] = B;
+                }
+            }
+
+            //put the processed image back on the canvas, and load it as an image for the button.
+            ct.putImageData(imgdata, 0, 0);
+            bpen.src = cc.toDataURL();           
         }
 
-        EPE_SetFlag(10);
+        EPE_ChangeState(lastState);
     }
 }
 function EPE_PenSize(bnt)
@@ -263,7 +324,7 @@ function EPE_PenSize(bnt)
         }
 
         html.append("</tr></table>");
-        EPE_SetFlag(92);
+        EPE_ChangeState(92);
         sizeTable = Popup(sizeTable, bnt, html.toString());
     }
 }
@@ -276,31 +337,38 @@ function EPE_SetPenSize(size)
             pensize = size;
             context.lineWidth = size;
         }
-        EPE_SetFlag(10);
+        EPE_ChangeState(lastState);
     }
 }
 
+function EPE_PickColor(bnt)
+{
+    with (EPE)
+    {
+        EPE_ChangeState(95);
+    }
+}
 //set the pen style of the canvas
 function EPE_SetDrawing()
 {
     with (EPE)
     {
         //Restore the setting of the canvas
-        if (flag <= 11)
+        if (state <= 11)
         {
             context.lineCap = "round";
             context.lineWidth = pensize;
             context.strokeStyle = pencolor;
         }
 
-        if (flag == 20 || flag == 21)
+        if (state == 20 || state == 21)
         {
             context.lineCap = "round";
             context.lineWidth = pensize;
             context.strokeStyle = pencolor;
         }
 
-        if (flag == 30 || flag == 31)
+        if (state == 30 || state == 31)
         {
             context.lineCap = "round";
             context.lineWidth = 1;

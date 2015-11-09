@@ -13,7 +13,14 @@ function EPE_OpenProcessor()
 {
     with (EPE)
     {
-        EPE_SetFlag(40);                
+        if (EPE_HasData() == false)
+        {
+            EPE_ShowInfo("There is nothing on the canvas.");
+        }
+        else
+        {
+            EPE_ChangeState(40);
+        }
     }
 }
 
@@ -22,11 +29,12 @@ function EPE_ExitProcessor()
 {
     with (EPE)
     {
-        EPE_SetFlag(0);      
+        EPE_ChangeState(lastState);      
     }
 }
 
 //start to process the image
+//causion: flipping will call from editor panel directly.
 function EPE_Process(option, value)
 {
     with (EPE)
@@ -47,6 +55,7 @@ function EPE_Process(option, value)
         if (imageData.data.length == 0) return false;
 
         working = true;
+        EPE_ShowStatus("Processing");
 
         //start the underground working thread.
         switch (option)
@@ -104,6 +113,7 @@ function EPE_Process_Event(eventData)
             //save the processed image data to canvas
             context.putImageData(eventData.image, 0, 0);
             EPE_ExitIO();
+            EPE_ShowStatus(state);
         }
     }
 }

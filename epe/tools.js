@@ -126,7 +126,7 @@ function Popup(div, cfire, html)
 
 
 //Get browser's type
-function GetExploreType()
+function BrowserInfo()
 {
     var userAgent = navigator.userAgent;
     var rMsie = /(msie\s|trident.*rv:)([\w.]+)/;
@@ -203,4 +203,75 @@ function EnumProp(obj)
     }
     //return str;
     alert(str);
+}
+
+
+
+function SetClass(c, name, add)
+{
+    if (add) AddClass(c, name);
+    else RemoveClass(c, name);
+}
+function AddClass(c, name)
+{
+
+    if (c)
+    {
+        if (IsEmptyOrNull(c.className) == false)
+        {
+            if (c.className.indexOf(name) < 0)
+            {
+                c.className = c.className + " " + name;
+            }
+        }
+        else
+        {
+            c.className = name;
+        }
+    }
+}
+function RemoveClass(c, name)
+{
+    if (c)
+    {
+        if (IsEmptyOrNull(c.className) == false)
+        {
+            if (c.className === name)
+            {
+                c.className = "";
+            }
+            else
+            {
+                c.className = c.className.replace(name, "");
+            }
+        }
+    }
+}
+
+function rgbToHex(r, g, b)
+{
+    return "#" + ((r << 16) | (g << 8) | b).toString(16);
+}
+
+//Get the event's pageX for all browser (from JQuery)
+function PageX(evt)
+{
+    if (evt.pageX == null && evt.clientX != null)
+    {
+        var doc = document.documentElement, body = document.body;
+        evt.pageX = evt.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc && doc.clientLeft || body && body.clientLeft || 0);
+    }
+
+    return evt.pageX;
+}
+
+//Get the event's pageY for all browser (from JQuery)
+function PageY(evt)
+{
+    if (evt.pageX == null && evt.clientX != null)
+    {
+        var doc = document.documentElement, body = document.body;
+        evt.pageY = evt.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) - (doc && doc.clientTop || body && body.clientTop || 0);
+    }
+    return evt.pageY;
 }

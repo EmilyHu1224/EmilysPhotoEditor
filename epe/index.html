@@ -31,6 +31,7 @@
                             <img id="bresize" src="images/resize.png" onclick="EPE_StartResize()" title="Resize the canvas with mouse wheel..." />
                             <img id="brotate" src="images/rotate.png" onclick="EPE_StartRotate()" title="Rotate the photo with mouse wheel..." />
                             <img id="bcolor" src="images/pencolor.png" onclick="EPE_SelectColor(this)" title="Select the color of pen" />
+                            <img id="bpickcolor" src="images/pickcolor.png" onclick="EPE_PickColor(this)" title="Pick a color from canvas" />
                             <img id="bsize" src="images/pensize.png" onclick="EPE_PenSize(this)" title="Select size of pen" />
                             <img id="bflip" src="images/flip.png" onclick="EPE_Process(8)" title="Flip the photo" />
                             <img id="bscaleup" src="images/scaleup.png" onclick="EPE_Scale(2)" title="Scale 100%" />
@@ -38,8 +39,8 @@
                             <img id="bprocessing" src="images/processing.png" onclick="EPE_OpenProcessor()" title="Processing the photo..." />
                             <img id="bclear" src="images/clear.png" onclick="EPE_Clear(this)" title="Clear the photo" />
                             <img id="bsave" src="images/save.png" onclick="EPE_Save(this)" title="Save to the album" />
-                            <img  src="images/paste.png" onclick="EPE_Paste(this)" title="Paste a photo from other site" />
-                            <img  src="images/fb.png" onclick="EPE_FB(this)" title="Share your photo to facebook" />
+                            <img src="images/paste.png" onclick="EPE_Paste(this)" title="Paste a photo from other site" />
+                            <img src="images/facebook.png" onclick="EPE_FB(this)" title="Share your photo to facebook" />
                         </td>
                         <td id="processor" style="display: none">
                             <img src="images/invert.png" onclick="EPE_Process(1)" title="Invert" />
@@ -53,10 +54,10 @@
                             <img src="images/redcover.png" onclick="EPE_Process(31)" title="Red covering" />
                             <img src="images/greencover.png" onclick="EPE_Process(32)" title="Green covering" />
                             <img src="images/bluecover.png" onclick="EPE_Process(33)" title="Blue covering" />
-                            <img src="images/silhouette.png" onclick="EPE_Process(34)" title="Silhouette (Black-and-white without gray scale)" />                            
+                            <img src="images/silhouette.png" onclick="EPE_Process(34)" title="Silhouette (Black-and-white without gray scale)" />
                             <img src="images/exit.png" onclick="EPE_ExitProcessor()" style="padding-left: 30px;" title="Close processor panel" />
                         </td>
-                        <td id="io" style="text-align: right; display: none">                            
+                        <td id="io" style="text-align: right; display: none">
                             <span id="info" style="font-size: 14pt; font-family: MV Boli"></span>
                             <img src="images/exit.png" onclick="EPE_ExitIO(this)" style="padding-left: 30px;" title="Cancel and return" />
                         </td>
@@ -80,20 +81,26 @@
             </td>
         </tr>
         <tr id="footbar" class="Footbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
-            <td colspan="3" style="text-align: center; vertical-align: middle; white-space: nowrap; width: 100%">
-                <span id="status"></span>
-                <span style="padding-left: 50px;">HTML APP</span>
-                <span style="padding-left: 50px;">HTML5+JavaScript</span>
-                <span style="padding-left: 50px;"><a href="http://github.com/emily1997" target="_blank">
-                    <img src="../images/GitHub.ico" style="vertical-align: middle; padding-right: 10px;" />Follow me on GitHut</a></span>
-                <span style="padding-left: 50px;"><a href="mailto:emilyhu1997@outlook.com"><img src="images/email.png" style="width: 20px; height: 20px; vertical-align: middle" /></a></span>
-                <span style="padding-left: 50px;">
-                    <a href="readme.txt" target="_blank">
-                        <img src="images/help.png" style="width: 20px; height: 20px; vertical-align: middle" title="Help information" /></a>
-                </span>
+            <td colspan="3" style="text-align: left; vertical-align: middle; white-space: nowrap;">
+                <table style="width: 100%">
+                    <tr>
+                        <td><span id="status"></span></td>
+                        <td style="text-align: center"><span style="padding-left: 50px;">HTML APP</span>
+                            <span style="padding-left: 50px;">HTML5+JavaScript</span>
+                            <span style="padding-left: 50px;"><a href="http://github.com/emily1997" target="_blank">
+                                <img src="../images/GitHub.ico" style="vertical-align: middle; padding-right: 10px;" />Follow me on GitHut</a></span>
+                            <span style="padding-left: 50px;"><a href="mailto:emilyhu1997@outlook.com">
+                                <img src="images/email.png" style="width: 20px; height: 20px; vertical-align: middle" /></a></span></td>
+                        <td style="text-align: left; padding-right: 10px">
+                            <a href="readme.txt" target="_blank">
+                                <img src="images/help.png" style="width: 20px; height: 20px; vertical-align: middle" title="Help information" /></a>
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
     <input id="uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
+    <canvas id="cc" width="40" height="40" style="display: none;"></canvas>
 </body>
 </html>

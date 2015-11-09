@@ -14,20 +14,36 @@ var PenSizes = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25];
 var EPE = {};
 var props_width = 48, props_height = 48;
 
+var state_string = [];
+state_string[0] = "Ready";
+state_string[1] = "Loading photos";
+state_string[10] = "Drawing";
+state_string[11] = "Drawing";
+state_string[20] = "Erasing";
+state_string[21] = "Erasing";
+state_string[30] = "Selecting";
+state_string[31] = "Selecting";
+state_string[40] = "Processor";
+state_string[91] = "Setting pen's color";
+state_string[92] = "Setting pen's size";
+state_string[93] = "Resizing";
+state_string[94] = "Rotating";
+state_string[95] = "Picking color";
+
 //Initialize the image
 function EPE_Init(id, pensize, pencolor)
 {
     EPE.context = null;
     EPE.canvas = null;
 
-    EPE.flag = 0;
+    EPE.state = 0;
+    EPE.lastState = 0;
     EPE.LastPose = null;
     EPE.pensize = pensize;
     EPE.pencolor = pencolor;
     EPE.toolbar = null;
     EPE.bpen = null;
     EPE.beraser = null;
-    EPE.bcolor = null;
     EPE.bselect = null;
     EPE.SelectedArea = null;
 
@@ -40,6 +56,8 @@ function EPE_Init(id, pensize, pencolor)
     EPE.worker = null;//processing worker.
     EPE.working = false;
     EPE.blank = true;//whether the canvas is blank (no image)
+    EPE.rotating_img=null;
+    EPE.rotating_radian = 0;
 
     //toolbar and the 3 panels on it
     EPE.toolbar = document.getElementById("toolbar");
@@ -51,12 +69,12 @@ function EPE_Init(id, pensize, pencolor)
     EPE.bpen = document.getElementById("bpen");
     EPE.beraser = document.getElementById("beraser");
     EPE.bselect = document.getElementById("bselect");
-    EPE.bcolor = document.getElementById("bcolor");
-    EPE.info = document.getElementById("info");
+    EPE.bpickcolor = document.getElementById("bpickcolor");
     EPE.bclear = document.getElementById("bclear");
     EPE.bsave = document.getElementById("bsave");
     EPE.bresize = document.getElementById("bresize");
     EPE.brotate = document.getElementById("brotate");
+    EPE.info = document.getElementById("info");
 
 
     //elements on main area
@@ -86,9 +104,6 @@ function EPE_Init(id, pensize, pencolor)
     {
         with (EPE)
         {
-            //Display the pen's color in the button
-            //if (bcolor != null) bcolor.style.backgroundColor = pencolor;
-
             //Resize the Canvas (because it does not support style)
             SizeCanvas();
 
@@ -120,65 +135,102 @@ function EPE_Init(id, pensize, pencolor)
             }
         }
 
+        //Display the pen's color in the button
+        EPE_SetColor(pencolor);
+
         //auto start drawing
-        EPE_SetFlag(10);
+        EPE_ChangeState(10);
     }
 }
 
-//Change the state
-//The flag is the current state of the APP, 
-//the flag is changed with this function solely, so we can adjust the UI concentrically.
-function EPE_SetFlag(new_state)
+//Change the state (state machine)
+//The state is the current state of the APP, 
+//the state is changed with this function solely, so we can adjust the UI concentrically.
+//the meaning of each state:
+//1 :load files from file input
+//
+//10:using pen, when the mouse down, start drawing
+//11:drawing
+//
+//20:using eraser, when the mouse down, start erasing
+//21:earsing
+//
+//30:using selecter, when the mouse down
+//31:selecting
+//
+//40:processor panel is opened, if it is opened the editor panel is hidden, otherwise the editor is opened.
+//
+//91:setting pen's color
+//92:setting pen's size
+//93:resizing
+//94:rotating
+//95:pick color (as the pen's color)
+function EPE_ChangeState(newState)
 {
     with (EPE)
     {
-        //1 :load files from file input
-        //
-        //10:using pen, when the mouse down, start drawing
-        //11:drawing
-        //
-        //20:using eraser, when the mouse down, start erasing
-        //21:earsing
-        //
-        //30:using selecter, when the mouse down
-        //31:selecting
-        //
-        //40:processor panel is opened, if it is opened the editor panel is hidden, otherwise the editor is opened.
-        //
-        //91:setting pen's color
-        //92:setting pen's size
-        //93:resizing
-        //94:rotating
 
-        if (new_state != 30 && new_state != 31) EPE_RemoveSelector();
+        if (newState != 30 && newState != 31) EPE_RemoveSelector();
 
-        if (flag == 93 && new_state != 93) pad.removeEventListener('mousewheel', EPE_MouseWheel, false);
-     
-        if (flag == 94 && new_state != 94) pad.removeEventListener('mousewheel', EPE_Rotate, false);
-       
 
-        flag = new_state;
-        EPE_ShowStatus(flag);
+        if (state != newState)
+        {
+            if (state == 93) pad.removeEventListener('mousewheel', EPE_ScaleWithWheel, false);
+            if (state == 94) pad.removeEventListener('mousewheel', EPE_RotateWithWheel, false);
+
+            lastState = state;
+            state = newState;
+            EPE_ShowStatus(state);
+        }
 
         //buttons on editor panel
-        bpen.style.borderStyle = (flag == 10 || flag == 11) ? "solid" : "none";
-        beraser.style.borderStyle = (flag == 20 || flag == 21) ? "solid" : "none";
-        bselect.style.borderStyle = (flag == 30 || flag == 31) ? "solid" : "none";
-        bresize.style.borderStyle = (flag == 93) ? "solid" : "none";
-        brotate.style.borderStyle = (flag == 94) ? "solid" : "none";
+        SetClass(bpen, "pressed", state == 10 || state == 11);
+        SetClass(beraser, "pressed", state == 20 || state == 21);
+        SetClass(bselect, "pressed", state == 30 || state == 31);
+        SetClass(bresize, "pressed", state == 93);
+        SetClass(brotate, "pressed", state == 94);
+        SetClass(bpickcolor, "pressed", state == 95);
 
-        bclear.title = (flag == 30 || flag == 31) ? "Clear the selected area" : "Clear the entire image";
-        bsave.title = (flag == 30 || flag == 31) ? "Save the selected area image to the album" : "Save the entire image to the album";
+        bclear.title = (state == 30 || state == 31) ? "Clear the selected area" : "Clear the entire image";
+        bsave.title = (state == 30 || state == 31) ? "Save the selected area image to the album" : "Save the entire image to the album";
 
         //editor panel
-        editor.style.display = flag != 40 ? "" : "none";
+        editor.style.display = state != 40 ? "" : "none";
 
         //processor panel
-        processor.style.display = flag == 40 ? "" : "none";
+        processor.style.display = state == 40 ? "" : "none";
 
         //the popup elements
-        if (colorTable != null) colorTable.style.display = flag == 91 ? "" : "none";
-        if (sizeTable != null) sizeTable.style.display = flag == 92 ? "" : "none";
+        if (colorTable != null) colorTable.style.display = state == 91 ? "" : "none";
+        if (sizeTable != null) sizeTable.style.display = state == 92 ? "" : "none";
+
+        //change the cursor according to the state.
+        switch (state)
+        {
+            case 10:
+            case 11:
+                //The color cursor is not applicable to Firefox?
+                if (BrowserInfo().browser == "Firefox") canvas.style.cursor = "url('cursor/penff.cur'),pointer";
+                else canvas.style.cursor = "url('cursor/pen.cur'),pointer";
+                break;
+
+            case 20:
+            case 21:
+                canvas.style.cursor = "url('cursor/eraser.cur'),pointer";
+                break;
+
+            case 95:
+                canvas.style.cursor = "url('cursor/pickcolor.cur'),pointer";
+                break;
+
+            case 93:
+                canvas.style.cursor = "url('cursor/resize.cur'),pointer";
+                break;
+
+            default:
+                canvas.style.cursor = "pointer";
+                break;
+        }
     }
     EPE_SetDrawing();
 }
@@ -197,11 +249,18 @@ function EPE_ShowInfo(message)
 }
 
 //Display status at the bottom
-function EPE_ShowStatus(message)
+function EPE_ShowStatus(code)
 {
     with (EPE)
     {
-        status.innerHTML = message;
+        if (state_string[code])
+        {
+            status.innerHTML = state_string[code];
+        }
+        else
+        {
+            status.innerHTML = code;
+        }
     }
 }
 
@@ -218,21 +277,11 @@ function EPE_ExitIO()
             worker = null;
         }
 
+        //hidden io and go back last state.
         io.style.display = "none";
 
-        switch (flag)
-        {
-            case 1://exit loading files
-                EPE_SetFlag(0);
-                break;
-
-            case 40://complete or cancel image processing and open the processor panel again
-                processor.style.display = "";
-                break;
-
-            default://cancel other progress, open the editor panel again
-                editor.style.display = "";
-        }
+        if (state == 1) EPE_ChangeState(lastState);
+        else EPE_ChangeState(state);
     }
 }
 
@@ -266,6 +315,8 @@ function EPE_Load(bnt)
 {
     with (EPE)
     {
+        EPE_ChangeState(1);
+
         EPE_ShowInfo("Select one or more photos from your device.");
 
         //Skill
@@ -275,11 +326,11 @@ function EPE_Load(bnt)
 
         //for IE, click() will return after the file-selecting-dialog close or canceled, it can exit the uploading state if the user cancel the uploading.
         //for other browser, click() will return at once before the file-selecting-dialog close or canceled. So, you had to click the exit button on the toolbar if you cancel the uploading.
-        if (GetExploreType().browser == "IE" && uploader.files.length == 0) EPE_ExitIO();
+        if (BrowserInfo().browser == "IE" && uploader.files.length == 0) EPE_ExitIO();
     }
 }
 
-//Load all the photos from the file control
+//Load all the photos from the file input
 function EPE_OpenPhotos(input)
 {
     with (EPE)
@@ -292,7 +343,6 @@ function EPE_OpenPhotos(input)
         }
         else
         {
-            EPE_SetFlag(1);
             EPE_ReadFile();
         }
     }
@@ -322,7 +372,7 @@ function EPE_ReadFile()
             img.src = this.result;//it is the data read from the file.
             EPE_AddToAlbum(img);
 
-            if (flag == 1)
+            if (state == 1)
             {
                 //read next file
                 index++;
@@ -357,11 +407,12 @@ function EPE_AddToAlbum(img)
     }
 }
 
-//Edit the photos
+//Load a photo to the canvas to be edited
 function EPE_EditPhoto(img)
 {
     with (EPE)
     {
+        //cancel exiting selected area if has.
         EPE_RemoveSelector();
 
         //remove all props.
@@ -399,7 +450,7 @@ function EPE_EditPhoto(img)
         //Restore the settings of canvas 
         EPE_SetDrawing();
 
-        EPE_SetFlag(0);
+        EPE_ChangeState(0);
     }
 }
 
@@ -409,7 +460,7 @@ function EPE_Save(bnt)
     with (EPE)
     {
         //save the selecting area into the alumn
-        if (flag == 30 && SelectedArea != null)
+        if (state == 30 && SelectedArea != null)
         {
             var img = new Image();
             img.src = canvas.toDataURL();
@@ -489,7 +540,7 @@ function EPE_Clear(bnt)
 {
     with (EPE)
     {
-        if (flag == 30)
+        if (state == 30)
         {
             //clear the image of selected area
             if (SelectedArea != null)
@@ -540,6 +591,8 @@ function EPE_Paste(evt)
 }
 
 var startevt;
+
+
 function EPE_DragStart(evt)
 {
     startevt = evt;
@@ -564,10 +617,13 @@ function EPE_Drop(evt)
 
         img.title = "Drag to adjust the location.\r\nUse the mouse wheel to adjust size.\r\nDrag to toolbar to remove.";
         img.draggable = true;
-        img.style.width = "50px";
-        img.style.height = "50px";
+        img.style.width = props_width + "px";
+        img.style.height = props_height + "px";
+
+        //Register the drag event to move the props on the canvas.
         img.addEventListener('dragstart', EPE_DragStart, false);
-        img.onmousewheel = function (event) { EPE_MouseWheelProp(event); }
+        //Register the mouse's wheel event to scale the size of props.
+        img.addEventListener('mousewheel', EPE_MouseWheelProp, false);
 
         drop.appendChild(img);
 
@@ -580,12 +636,17 @@ function EPE_Drop(evt)
             //move selected props
             var img = document.getElementById(id);
 
-            var x1 = startevt.layerX;
-            var x2 = evt.layerX;
-            var y1 = startevt.layerY;
-            var y2 = evt.layerY;
+            var x1 = PageX(startevt);
+            var y1 = PageY(startevt);
+            var x2 = PageX(evt);
+            var y2 = PageY(evt);
             img.style.left = parseInt(img.style.left) + x2 - x1 + "px";
             img.style.top = parseInt(img.style.top) + y2 - y1 + "px";
+
+            //if the props' position is set to the same as the mouse location of the event as follows, 
+            //there will be some delta if the props are not dragged at the most left-top point.
+            //img.style.left = x2 + "px";
+            //img.style.top = y2 + "px";
         }
         else
         {
@@ -604,6 +665,26 @@ function EPE_DropOut(evt)
 function EPE_AllowDrop(evt)
 {
     evt.preventDefault();
+}
+
+//Scaling the props on the canvas with mouse wheel.
+function EPE_MouseWheelProp(evt)
+{
+    evt.preventDefault();
+
+    var ratio;
+    evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
+    if (evt.wheelDelta > 0)
+    {
+        ratio = 1.1;
+    }
+    else
+    {
+        ratio = 0.9;
+    }
+
+    evt.target.style.width = parseInt(evt.target.style.width) * ratio + "px";
+    evt.target.style.height = parseInt(evt.target.style.height) * ratio + "px";
 }
 
 //Scaling (processing the image by the canvas directly, not using web worker)
@@ -631,21 +712,21 @@ function EPE_StartResize()
 {
     with (EPE)
     {
-        if (flag != 93)
+        if (state != 93)
         {
-            EPE_SetFlag(93);
-            pad.addEventListener('mousewheel', EPE_MouseWheel, false);
+            EPE_ChangeState(93);
+            pad.addEventListener('mousewheel', EPE_ScaleWithWheel, false);
         }
         else
         {
-            pad.removeEventListener('mousewheel', EPE_MouseWheel, false);
-            EPE_SetFlag(0);
+            pad.removeEventListener('mousewheel', EPE_ScaleWithWheel, false);
+            EPE_ChangeState(lastState);
         }
     }
 }
 
 //Scaling the image on the canvas with mouse wheel.
-function EPE_MouseWheel(evt)
+function EPE_ScaleWithWheel(evt)
 {
     var ratio;
     evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
@@ -661,78 +742,80 @@ function EPE_MouseWheel(evt)
     EPE_Scale(ratio);
 }
 
-
-//Rotating the image on the canvas with mouse wheel.
-var rotatingimg;
-var rotatingratio;
+//Prepare to rotate the image on the canvas with mouse wheel.
 function EPE_StartRotate()
 {
     with (EPE)
     {
-        if (flag != 94)
+        if (state != 94)
         {
-            EPE_SetFlag(94);
-            pad.addEventListener('mousewheel', EPE_Rotate, false);
+            if (EPE_HasData() == false)
+            {
+                EPE_ShowInfo("There is nothing on the canvas.");
+            }
+            else
+            {
+                EPE_ChangeState(94);
+                pad.addEventListener('mousewheel', EPE_RotateWithWheel, false);
 
-            rotatingimg = new Image();
-            rotatingimg.src = canvas.toDataURL();
+                //save the image on the canvs into an image to rotate continuously.
+                rotating_img = new Image();
+                rotating_img.src = canvas.toDataURL();
 
-            var size = Math.sqrt(rotatingimg.width * rotatingimg.width + rotatingimg.height * rotatingimg.height);
-            ResizeCanvas(size, size);
+                //resize the canvas to contain the rotated images.
+                var size = Math.sqrt(rotating_img.width * rotating_img.width + rotating_img.height * rotating_img.height);
+                ResizeCanvas(size, size);
 
-            rotatingratio = 0;
-            context.drawImage(rotatingimg, 0, 0);
+                //initialize the rotating radian
+                rotating_radian = 0;
+
+                //center the image on conter of the canvas for rotating.
+                context.drawImage(rotating_img, (size - rotating_img.width) / 2, (size-rotating_img.height) / 2);
+            }
         }
         else
         {
-            EPE_SetFlag(0);
-            pad.removeEventListener('mousewheel', EPE_Rotate, false);
+            EPE_ChangeState(lastState);
+            pad.removeEventListener('mousewheel', EPE_RotateWithWheel, false);
         }
     }
 }
-function EPE_Rotate(evt)
+
+//Rotate the image on the canvas while the mouse's wheel turning.
+function EPE_RotateWithWheel(evt)
 {
     with (EPE)
     {
+        //accumulate the rotating radian for rotate the image continuously (after the canvas coordinate restored)
         evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
         if (evt.wheelDelta > 0)
         {
-            rotatingratio += 10;
+            rotating_radian += 10;
         }
         else
         {
-            rotatingratio -= 10;
+            rotating_radian -= 10;
         }
 
-
-        //ResizeCanvas(img.width*2, img.height*2);
+        //save the setting of the canvas
         context.save();
-        context.clearRect(0, 0, canvas.width, canvas.height);//清空内容
-        context.translate(canvas.clientWidth / 2, canvas.clientHeight / 2);//中心坐标
-        context.rotate(rotatingratio * Math.PI / 180);//旋转
-        context.drawImage(rotatingimg, -rotatingimg.width / 2, -rotatingimg.height / 2);//居中画图
+
+        //clear the entire canvas 
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        //translate the coordinate (x/y) of the convas (start from center, not from left-top point)
+        context.translate(canvas.clientWidth / 2, canvas.clientHeight / 2);
+
+        //rotate the canvas to make the image rotated
+        context.rotate(rotating_radian * Math.PI / 180);
+
+        //draw the image on conter of the canvas for rotating.
+        context.drawImage(rotating_img, -rotating_img.width / 2, -rotating_img.height / 2);
+
+        //restore the setting (including coordinate) to normal state.
         context.restore();
     }
 }
 
 
-//Scaling the props on the canvas with mouse wheel.
-function EPE_MouseWheelProp(evt)
-{
-    evt.preventDefault();
-
-    var ratio;
-    evt.wheelDelta = evt.wheelDelta ? evt.wheelDelta : (evt.deltaY * (-40));
-    if (evt.wheelDelta > 0)
-    {
-        ratio = 1.1;
-    }
-    else
-    {
-        ratio = 0.9;
-    }
-
-    evt.target.style.width = parseInt(evt.target.style.width) * ratio + "px";
-    evt.target.style.height = parseInt(evt.target.style.height) * ratio + "px";
-}
 
