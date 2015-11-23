@@ -137,6 +137,7 @@ function EPE_Init(id, pensize, pencolor)
 
             document.body.addEventListener('paste', EPE_Paste, false);
 
+            //load all props
             for (var i = 1; i <= props_count; i++)
             {
                 var img = new Image();
@@ -149,6 +150,16 @@ function EPE_Init(id, pensize, pencolor)
                 img.addEventListener('dragstart', EPE_DragStart, false);
                 props.appendChild(img);
             }
+
+            //add samples photos into album.
+            for (var i = 1; i <= 3; i++)
+            {
+                var img = new Image();
+                img.src = "album/" + i + ".jpg";
+                EPE_AddToAlbum(img);
+                if (i == 1) EPE_EditPhoto(img);
+            }
+
         }
 
         //Display the pen's color in the button
@@ -1047,4 +1058,10 @@ function ShowProps(bnt)
             LayoutResize();
         }
     }
+}
+
+
+function EPE_FB()
+{
+    //var _uri = 'http://www.facebook.com/sharer.php?u=' + encodeURIComponent(shareInfo.url) + '&t=' + encodeURIComponent(shareInfo.title);
 }
