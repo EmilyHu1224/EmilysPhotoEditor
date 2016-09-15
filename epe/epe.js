@@ -40,6 +40,9 @@ state_string[95] = "Picking color";
 
 
 //Initialize the image
+//id: element's id of the canvas.
+//pensize: the initial size of the paintbrush
+//pencolor: the initial color of the paintbrush
 function EPE_Init(id, pensize, pencolor)
 {
     EPE.context = null;
@@ -346,7 +349,8 @@ function EPE_HasData()
     return false;
 }
 
-//Load photos
+//Load photos into EPE with hidden <file> element
+//Select and open a file with file-selection-dialog, it is a living/true experience of windows application (SPA)
 function EPE_Load(bnt)
 {
     with (EPE)
@@ -365,7 +369,6 @@ function EPE_Load(bnt)
         if (BrowserInfo().browser == "IE" && uploader.files.length == 0) EPE_ExitIO();
     }
 }
-
 //Load all the photos from the file input
 function EPE_OpenPhotos(input)
 {
@@ -626,8 +629,10 @@ function EPE_Paste(evt)
     }
 }
 
-
-
+//drag-drop, there are 3 operaions with drag-drop:
+//1: drag photo from album into canvas
+//2: drag props into canvas
+//3: drag props on the canvas to move it
 function EPE_DragStart(evt)
 {
     EPE.DragStartEvent = evt;
@@ -869,16 +874,26 @@ function EPE_ButtonOn(bnt, on)
         EPE_BrightButton(bnt, on);
     }
 }
+
+//lighten a button on toolbar while mouse over it.
+//bnt: the dom of button to be lightened.
+//on: true/false, true to lighten, false to restore normal state.
+//to image for a button, normal image stored at bnt.src, lightened image saved in bnt.offsrc.
+//BrightenImage() can change current image's outline black pixels into blue ones.
+//save two images (one is un-lightened, one is lightened) at bnt.onsrc or bnt.offsrc (special properties created by EPE).
+//the original image saved in bnt.src on page load.
 function EPE_BrightButton(bnt, on)
 {
     with (EPE)
     {
-        //create an image for mouse on
+        //create the lightened image if it had not been created.
         if (!bnt.onsrc)
         {
-            bnt.offsrc = bnt.src;
+            bnt.offsrc = bnt.src;//the original image.
+
             try
             {
+                //create a lightened image for the button, and saved into user-defined onsrc property.
                 bnt.onsrc = BrightenImage(bnt.src, false);
             }
             catch (e)
@@ -892,6 +907,11 @@ function EPE_BrightButton(bnt, on)
     }
 }
 
+//lighten a button-image with canvas.
+//all button-image is black and white color, white pixels are trasparent.
+//and the pixels of outline of the button-image is not trasparent (black/visible, RGBA's A!=0),
+//so we can change these black pixels into blue to "lighten" the button.
+//use a hidden canvas to fulfill this convertion.
 function BrightenImage(data)
 {
     with (EPE)
@@ -906,7 +926,7 @@ function BrightenImage(data)
         cc.height = img.height;
         ct.drawImage(img, 0, 0);
 
-        //change the color
+        //change the color (blue)
         var R = 0;
         var G = 0;
         var B = 255;
@@ -1065,3 +1085,8 @@ function EPE_FB()
 {
     //var _uri = 'http://www.facebook.com/sharer.php?u=' + encodeURIComponent(shareInfo.url) + '&t=' + encodeURIComponent(shareInfo.title);
 }
+
+
+
+
+

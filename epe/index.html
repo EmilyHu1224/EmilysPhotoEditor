@@ -1,28 +1,41 @@
-﻿<!DOCTYPE html>
+﻿<!--the only page for this SPA.-->
+
+<!DOCTYPE html>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Emily Photo Editor For Web (EPE 2.0)</title>
+    <!-- the javascript files-->
     <script type="text/ecmascript" src="layout.js"></script>
     <script type="text/ecmascript" src="epe.js"></script>
     <script type="text/ecmascript" src="draw.js"></script>
     <script type="text/ecmascript" src="process.js"></script>
     <script type="text/ecmascript" src="tools.js"></script>
+
+    <!-- the style file-->
     <link rel="stylesheet" type="text/css" href="epe.css" />
 
 </head>
+
+<!--Initialize the page and the canvas with initial size and color of the paintbrush on page load.-->
+
 <body onload="EPE_Init('c',  10, '#FF0000')">
     <table cellpadding="0" cellspacing="0">
+
+        <!--area of header contains the page/window's title and toolbar.-->
         <tr id="toolbar" class="Toolbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
             <td colspan="3">
                 <table style="width: 100%">
                     <tr>
+                        <!--area of windows's title-->
                         <td style="padding-left: 5px; white-space: nowrap">
                             <span><a href="../index.html">
                                 <img src="images/home.png" style="width: 40px; height: 40px; padding-left: 10px;" /></a></span>
                             <span>
                                 <img src="images/title.png" style="width: 400px; height: 50px; padding-right: 10px" /></span>
                         </td>
+                        <!--area of buttons for editing photo (at drawing state)-->
+                        <!--all button will be lightened while mouse on them, refer to EPE_BrightButton()-->
                         <td id="editor">
                             <img src="images/open.png" onclick="EPE_Load(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Open your photos" />
                             <img id="bpen" src="images/pen.png" onclick="EPE_Pen(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Start to draw" />
@@ -42,6 +55,7 @@
                             <img src="images/paste.png" onclick="EPE_Paste(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Paste a photo from other site" />
                             <img src="images/facebook.png" onclick="EPE_FB(this)" onmouseover="EPE_BrightButton(this,true)" onmouseout="EPE_BrightButton(this,false)" title="Share your photo to facebook" />
                         </td>
+                        <!--area of buttons for processing photo (at image-processing state)-->
                         <td id="processor" style="display: none">
                             <img src="images/invert.png" onclick="EPE_Process(1)" title="Invert" />
                             <img src="images/grayscale.png" onclick="EPE_Process(30)" title="Gray scale" />
@@ -56,6 +70,7 @@
                             <img src="images/bluecover.png" onclick="EPE_Process(33)" title="Blue covering" />
                             <img src="images/exit.png" onclick="EPE_ExitProcessor()" style="padding-left: 30px;" title="Close processor panel" />
                         </td>
+                        <!--area of progress-bar and a cancel button to cancel the processing-->
                         <td id="io" style="text-align: right; display: none">
                             <span id="info" style="font-size: 14pt; font-family: MV Boli"></span>
                             <img src="images/exit.png" onclick="EPE_ExitIO(this)" style="padding-left: 30px;" title="Cancel and return" />
@@ -64,10 +79,19 @@
                 </table>
             </td>
         </tr>
+        <!--area of main content, it is split into 3 parts: left/middle/right-->
         <tr id="main">
+            <!--area of album to display the thumbnails of photos had been opened and can be dragged into the canvas for editing-->
+            <!--it contains a small button to show or hide this area-->
             <td>
-                <div id="album" title="Album: click the Open button on the toolbar to load the phontos from your device."><div style="text-align:right;"><img src="images/arrowleft.gif" onclick="ShowAlbum(this)" title="Close or display" /></div></div>
+                <div id="album" title="Album: click the Open button on the toolbar to load the phontos from your device.">
+                    <div style="text-align: right;">
+                        <img src="images/arrowleft.gif" onclick="ShowAlbum(this)" title="Close or display" />
+                    </div>
+                </div>
             </td>
+            <!--the main area for canvas where the photo can be dragged into and edited.-->
+            <!--canvas is the great element of HTML5-->
             <td id="td">
                 <div id="pad">
                     <div id="drop" dropzone="link" ondrop="EPE_Drop(event)" ondragover="EPE_AllowDrop(event)" title="Canvas: Drag your photo here to edit it.">
@@ -75,15 +99,24 @@
                     </div>
                 </div>
             </td>
+            <!--the area contains all props can be dragged into the canvas to decorate the photo-->
+            <!--it contains a small button to show or hide this area-->
             <td>
-                <div id="props" title="Props: select a property and drag to the canvas to decorate your photo."><div style="text-align:left;"><img src="images/arrowright.gif" onclick="ShowProps(this)" title="Close or display" /></div></div>
+                <div id="props" title="Props: select a property and drag to the canvas to decorate your photo.">
+                    <div style="text-align: left;">
+                        <img src="images/arrowright.gif" onclick="ShowProps(this)" title="Close or display" />
+                    </div>
+                </div>
             </td>
         </tr>
+        <!--the area of footer contains status-grid and hyperlinks-->
         <tr id="footbar" class="Footbar" ondrop="EPE_DropOut(event)" ondragover="EPE_AllowDrop(event)">
             <td colspan="3" style="text-align: left; vertical-align: middle; white-space: nowrap;">
                 <table style="width: 100%">
                     <tr>
-                        <td style="width:200px"><span id="status"></span></td>
+                        <!--a grid to indicate current status (dynamically), such as drawing, processing-->
+                        <td style="width: 200px"><span id="status"></span></td>
+                        <!--other static hyperlinks-->
                         <td style="text-align: center"><span style="padding-left: 50px;">HTML APP</span>
                             <span style="padding-left: 50px;">HTML5+JavaScript</span>
                             <span style="padding-left: 50px;"><a href="http://github.com/emily1997" target="_blank">
@@ -99,7 +132,14 @@
             </td>
         </tr>
     </table>
+    <!--other elements prepared to be used in the background-->
+
+    <!--the file uploader, it always is hidden, the open-button will start to select a photo and put the file here and then load to album.-->
+    <!--refer to EPE_Load(), raise click() to start the file-selection.-->
     <input id="uploader" multiple="multiple" style="display: none;" type="file" accept="image/*" onchange="EPE_OpenPhotos(this)" />
+
+    <!--a canva used to process image in the background (such as BrightenImage)-->
+    <!--refer to BrightenImage()/EPE_SetColor()-->
     <canvas id="cc" width="40" height="40" style="display: none;"></canvas>
 </body>
 </html>
